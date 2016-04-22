@@ -1,0 +1,452 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robert Moses Game</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0-beta.8/esri-leaflet.js"></script>
+</head>
+<body>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.0.2/esri-leaflet-geocoder.css">
+    <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.0.2/esri-leaflet-geocoder.js"></script>
+
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+    
+    <script src="js/leaflet.curve.js"></script>
+    
+    <div id="map">
+    </div>
+    <div id="options">
+    Select a Line<br />
+    <div class="subway-line subway-clickable subway-blue subway-selected"><div class="height_fix"></div><div class="content">A</div></div>
+    <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">C</div></div>
+    <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">E</div></div><br />
+    <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">B</div></div>
+    <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">D</div></div>
+    <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">F</div></div>
+    <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">M</div></div><br />
+    <div class="subway-line subway-clickable subway-light-green"><div class="height_fix"></div><div class="content">G</div></div><br />
+    <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">J</div></div>
+    <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">Z</div></div><br />
+    <div class="subway-line subway-clickable subway-silver"><div class="height_fix"></div><div class="content">L</div></div><br />
+    <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">N</div></div>
+    <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">Q</div></div>
+    <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">R</div></div><br />
+    <div class="subway-line subway-clickable subway-gray"><div class="height_fix"></div><div class="content">S</div></div><br />
+    <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">1</div></div>
+    <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">2</div></div>
+    <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">3</div></div><br />
+    <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">4</div></div>
+    <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">5</div></div>
+    <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">6</div></div><br />
+    <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div>
+
+
+    </div>
+    <script>
+    
+    var mapbox_token = 'pk.eyJ1IjoianB3cmlnaHQwIiwiYSI6ImNpbjZ1Y212aTA2dGR1ZGtzNHNxZWRkdjIifQ.OgGN3EIjNNB8JsbNRXqqAg';
+
+    var station_layer = L.featureGroup();
+    var curve_layer = L.featureGroup();
+    
+    
+    
+    var map = L.map('map', {
+        fullscreenControl: true
+    }).setView([40.713, -74.006], 13);
+
+    curve_layer.setZIndex(2).addTo(map);
+    station_layer.setZIndex(3).addTo(map);
+    
+    map.addLayer(curve_layer);
+    map.addLayer(station_layer);
+    
+    var tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token='+mapbox_token, {
+        maxZoom: 18,
+        attribution: '',
+        id: 'mapbox.light'
+    }).addTo(map);
+
+    var neighborhoods = new L.geoJson();
+    //neighborhoods.addTo(map);
+
+    $.ajax({
+        dataType: "json",
+        url: "geojson/neighborhoods.geojson",
+        success: function(data) {
+            $(data.features).each(function(key, data) {
+                neighborhoods.addData(data);
+            });
+            //neighborhoods.addTo(map);
+            //console.log(neighborhoods);
+        }
+    }).error(function() {});
+    
+    var landmarks = new L.geoJson();
+    //landmarks.addTo(map);
+
+    $.ajax({
+        dataType: "json",
+        url: "geojson/landmarks.geojson",
+        success: function(data) {
+            $(data.features).each(function(key, data) {
+                landmarks.addData(data);
+            });
+            //neighborhoods.addTo(map);
+            //console.log(neighborhoods);
+        }
+    }).error(function() {});
+    
+    var active_line = 'A';
+    
+    $('.subway-clickable').click(function() {
+        if ($(this).hasClass('subway-selected')) {
+            $(this).removeClass('subway-selected');
+            active_line = 'None';
+        } else {
+            $('.subway-clickable').removeClass('subway-selected');
+            $(this).addClass('subway-selected');
+            active_line = $(this).text();
+        }
+        regeneratePopups();
+    });
+    
+    var next_station_id = 0;
+    
+    function regeneratePopups() {
+        var i;
+        for (i = 0; i < stations.length; i++) {
+            console.log(i);
+            var stationi = stations[i];
+            var popup = generatePopup(i, stationi['name'], stationi['info'], stationi['lines']);
+            stations[i]['marker'].unbindPopup();
+            stations[i]['marker'].bindPopup(popup);
+            station_popups[i] = popup;
+            
+        }
+    }
+    
+    function deleteStation(e) {
+    
+        
+        var station_id = $(this).attr('id').replace('delete-', '');
+        var station = stations[station_id];
+        
+        console.log('Delete station '+station_id);
+        
+        var delete_classes = $(this).attr('class').split(' ');
+        var station_lines = [];
+        for (c in delete_classes) {
+            if (delete_classes[c].indexOf('line-') > -1) {
+                var line = delete_classes[c].replace('line-', '');
+                station_lines.push(line);
+            }
+        }
+        station_layer.removeLayer(station['marker']);
+        
+        stations.splice(station_id,1);
+        station_popups.splice(station_id,1);
+        
+        console.log(station_associations['A']);
+        regeneratePopups();
+        
+        for (line_index in station_lines) {
+            var line = station_lines[line_index];
+            var li = station_associations[line].indexOf(station);
+            if (li > -1) {
+                
+                console.log('Station found, line '+line+' index '+li);
+                station_associations[line].splice(li, 1);
+                
+                drawCurves(line);
+            }
+        }
+        console.log(station_associations['A']);
+            
+    }
+    
+    function buildToStation(e) {
+    
+        
+        var station_id = $(this).attr('id').replace('build-', '');
+        var station = stations[station_id];
+        
+        
+        console.log('Build to station '+station_id);
+        
+        var build_classes = $(this).attr('class').split(' ');
+        var station_lines = [];
+        for (c in build_classes) {
+            if (build_classes[c].indexOf('line-') > -1) {
+                var line = build_classes[c].replace('line-', '');
+                station_lines.push(line);
+            }
+        }
+        
+        
+        for (line_index in station_lines) {
+            var line = station_lines[line_index];
+            
+            station['lines'].push(line);
+            station_associations[line].push(station);
+            $('div.subway-lines').append('<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+line+'</div></div>');            
+            drawCurves(line);
+        }
+        
+        stations[station_id] = station;
+        
+        regeneratePopups();
+            
+    }
+    
+    $(document).on('click', '.station-delete', deleteStation);
+    
+    $(document).on('click', '.station-build', buildToStation);
+    
+    $(document).on('click', '.station-name', function() {
+        var text = $(this).text();
+        var sn = $(this);
+        $(this).text('');
+        $('<textarea class="station-name-edit"></textarea>').appendTo($(this)).val(text).select().blur(
+
+        function() {
+            var newText = $(this).val();
+            $(this).parent().text(newText).find('textarea').remove();
+            var station_id = sn.attr('id').replace('station-', '');
+            var station = stations[station_id];
+            stations[station_id]['name'] = newText;
+            var popup = generatePopup(station_id, station['name'], station['info'], station['lines']);
+            
+            stations[station_id]['marker'].unbindPopup();
+            stations[station_id]['marker'].bindPopup(popup);
+            station_popups[station_id] = popup;
+            
+        });
+    });
+
+    var popup = L.popup();
+    //var circle = L.circleMarker();
+    
+    var geocodeService = L.esri.Geocoding.geocodeService();
+    
+    function cleanAddress(addr) {
+        addr = addr.replace(/(\d*-?\d*)\s/g, " ");
+        addr = addr.replace("Plz", "Plaza");
+        addr = addr.trim();
+        return addr;
+    }
+    
+    function cleanCity(city) {
+        city = city.replace(" Town of", "");
+        city = city.replace(" Twp", "");
+        city = city.trim();
+        return city;
+    }
+    
+    var prev_coord = [L.latLng(0, 0), L.latLng(0,0)];
+
+    var stations = [];
+    var station_popups = [];
+    var station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': []};   
+    var curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': []};
+    var line_colors = {'A': '#0039A6', 'B': '#FF6319', 'C': '#0039A6', 'D': '#FF6319', 'E': '#0039A6', 'F': '#FF6319', 'G': '#6CBE45', 'J': '#996633', 'L': '#A7A9AC', 'M': '#FF6319', 'N': '#FCCC0A', 'Q': '#FCCC0A', 'R': '#FCCC0A', 'S': '#808183', 'Z': '#996633', '1': '#EE352E', '2': '#EE352E', '3': '#EE352E', '4': '#00933C', '5': '#00933C', '6': '#00933C', '7': '#B933AD'};
+    var line_styles = {'A': 'subway-blue', 'B': 'subway-orange', 'C': 'subway-blue', 'D': 'subway-orange', 'E': 'subway-blue', 'F': 'subway-orange', 'G': 'subway-light-green', 'J': 'subway-brown', 'L': 'subway-silver', 'M': 'subway-orange', 'N': 'subway-yellow', 'Q': 'subway-yellow', 'R': 'subway-yellow', 'S': 'subway-gray', 'Z': 'subway-brown', '1': 'subway-red', '2': 'subway-red', '3': 'subway-red', '4': 'subway-green', '5': 'subway-green', '6': 'subway-green', '7': 'subway-purple'};
+    
+    function generatePopup(station_id, station_name, station_info, lines) {
+        var station_popup = L.popup({'className': 'station-popup'});
+        var station_content = '<div class="station-name" id="station-'+station_id+'">'+station_name+'</div>';
+        station_content += '<div class="station-content"><div class="station-info">'+station_info+'</div>';
+        station_content += '<div class="station-info subway-lines">';
+        for (i in lines) {
+            var line = lines[i];
+            station_content += '<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+line+'</div></div>';
+        }
+        station_content += '</div>';
+        
+        for (line_index in line_styles) {
+            if (lines.indexOf(line_index) == -1 && line_index == active_line) {
+                station_content += '<div class="station-content-button station-build line-'+line_index+'" id="build-'+station_id+'">Build <div class="subway-line-mini '+line_styles[line_index]+'"><div class="height_fix"></div><div class="content">'+line_index+'</div></div></div>';
+            }
+        }
+        
+        station_content += '<div class="station-content-button station-delete ';
+        for (i in lines) {
+            var line = lines[i];
+            station_content += 'line-'+line+' ';
+        }
+        station_content += '" id="delete-'+station_id+'">Delete</div>';
+        station_content += '</div>';
+        station_popup.setContent(station_content);
+        return station_popup;
+    }
+    
+    map.on('click', handleMapClick);
+    
+    function drawCurves(line) {
+    
+        console.log('Drawing curves for '+line);
+    
+        for (var i = 0; i < curves[line].length; i++) {
+            curve = curves[line][i];
+            
+            map.removeLayer(curve);
+        }
+        curves[line] = [];
+        var i;
+        var cp_lat;
+        var cp_lng;
+        var curve_options = {color: line_colors[line], weight: 8, fill: false};
+        console.log('Stations to include: '+station_associations[line].length);
+        for (i = 1; i < station_associations[line].length; i++) {
+            var st_prev = station_associations[line][i-1]['marker'].getLatLng();
+            var st_curr = station_associations[line][i]['marker'].getLatLng();
+            if (i == 2) {
+                var st_dir = station_associations[line][i-2]['marker'].getLatLng();
+                cp_lat = st_dir.lat;
+                cp_lng = st_dir.lng;
+            }
+            if (i > 1) {
+                cp_lat = st_prev.lat + (st_prev.lat - cp_lat)*0.3;
+                cp_lng = st_prev.lng + (st_prev.lng - cp_lng)*0.3;
+                curve = L.curve(['M', [st_prev.lat, st_prev.lng], 'Q', [cp_lat, cp_lng], [st_curr.lat, st_curr.lng]], curve_options);
+            } else {
+                curve = L.curve(['M', [st_prev.lat, st_prev.lng], 'L', [st_curr.lat, st_curr.lng]], curve_options);
+            }
+
+            curve_layer.addLayer(curve);
+            curves[line].push(curve);
+            
+            
+        }
+        
+        station_layer.bringToFront();
+    }
+    
+    function handleMapClick(e) {
+        console.log('map click');
+        geocodeService.reverse().distance(500).latlng(e.latlng).run(function(error, result) {
+            var station_name = '';
+            var station_info = '';
+            var latlng = e.latlng;
+            var geocode_success = true;
+            if (error) {
+                console.log(error);
+                geocode_success = false;
+            } else {
+                var geocoded_name = result.address.Address;
+                var city = result.address.City;
+                
+                station_name = cleanAddress(geocoded_name);
+                
+                if (city != "New York") {
+                    station_name = cleanCity(city) + ' - ' + station_name;
+                    station_info += cleanCity(city);
+                }
+                latlng = result.latlng;
+            }
+
+            var enc_boroughs = [];
+            var enc_neighborhoods = [];
+            var enc_neighborhoods_always_label = ['Astoria'];
+            var enc_neighborhoods_only_label = ['Roosevelt Island', 'Governors Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
+            var enc_landmarks = [];
+            
+            var neighborhood_in_station_name = false;
+            
+            neighborhoods.eachLayer(function (layer) {
+                if (layer.getBounds().contains(latlng)) {
+                    enc_boroughs.push(layer.feature.properties.borough);
+                    enc_neighborhoods.push(layer.feature.properties.neighborhood);
+                    
+                }
+            });
+            if (enc_neighborhoods.length > 0) {
+                console.log(enc_neighborhoods);
+                var enc_borough = enc_boroughs[0];
+                var enc_neighborhood = enc_neighborhoods[0];
+                console.log(enc_neighborhood);
+                console.log(enc_neighborhoods_always_label.indexOf(enc_neighborhood));
+
+                if (enc_borough != "Manhattan" && station_name.match(/\d/g)) {
+                    station_name = enc_neighborhood + ' - ' + station_name;
+                    neighborhood_in_station_name = true;
+                } 
+                
+                for (en in enc_neighborhoods) {
+                    if ((enc_neighborhoods_always_label.indexOf(enc_neighborhoods[en]) != -1) && !neighborhood_in_station_name) {
+                        station_name = enc_neighborhoods[en] + ' - ' + station_name;
+                        neighborhood_in_station_name = true;
+                    }
+                    if ((enc_neighborhoods_only_label.indexOf(enc_neighborhoods[en]) != -1) && !neighborhood_in_station_name) {
+                        station_name = enc_neighborhoods[en];
+                        neighborhood_in_station_name = true;
+                    }
+                }
+                
+                if (!geocode_success) {
+                    station_name = enc_neighborhood;
+                }
+                station_info += enc_borough;
+                station_info += '<br />';
+                station_info += enc_neighborhood;
+            }
+            
+            landmarks.eachLayer(function (layer) {
+                if (layer.getBounds().contains(latlng)) {
+                    enc_landmarks.push(layer.feature.properties.name);
+                    
+                }
+            });
+            if (enc_landmarks.length > 0) {
+                station_name = station_name + ' - ' + enc_landmarks[0];
+            }
+                
+
+
+            station = L.circleMarker(latlng, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(8);
+            var station_id = stations.length;
+            var station_popup = generatePopup(station_id, station_name, station_info, [active_line]);
+            
+            if (active_line != "None") {
+                station.on('click', function(s_e) {
+                    
+                    // Disable new station creation.
+                    map.off('click', handleMapClick);
+                    
+                    // Wait a second before you can create a new station.
+                    setTimeout(function() {
+                        map.on('click', handleMapClick);
+                    }, 1000);
+                });
+                //station.addTo(station_layer);
+
+                var station_obj = {"marker": station, "name": station_name, "info": station_info, "lines": [active_line]};
+                stations.push(station_obj);
+                station_associations[active_line].push(station_obj);
+                
+                
+                drawCurves(active_line);
+                
+                station_layer.addLayer(station);
+                station_layer.bringToFront();
+                station_popups.push(station_popup);
+                station.bindPopup(station_popup).openPopup();
+            }
+        });
+    }
+
+    </script>
+</body>
+</html>
