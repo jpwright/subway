@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
 
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0-beta.8/esri-leaflet.js"></script>
+    
 </head>
 <body>
 
@@ -24,6 +25,10 @@
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
     
     <script src="js/leaflet.curve.js"></script>
+    <script src='js/leaflet-heat.js'></script>
+    <script src='js/leaflet.label.js'></script>
+    <script src='leaflet-pip/leaflet-pip.js'></script>
+    <script src='js/turf.min.js'></script>
     
     <div id="map">
     </div>
@@ -50,8 +55,13 @@
     <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">4</div></div>
     <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">5</div></div>
     <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">6</div></div><br />
-    <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div>
+    <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div><br />
+    <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">SI</div></div>
+    <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
+    <div class="subway-line subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div><br />
 
+    <div id="route-diagram">
+    </div>
 
     </div>
     <script>
@@ -73,6 +83,8 @@
     map.addLayer(curve_layer);
     map.addLayer(station_layer);
     
+    L.control.scale().addTo(map);
+    
     var tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token='+mapbox_token, {
         maxZoom: 18,
         attribution: '',
@@ -89,8 +101,6 @@
             $(data.features).each(function(key, data) {
                 neighborhoods.addData(data);
             });
-            //neighborhoods.addTo(map);
-            //console.log(neighborhoods);
         }
     }).error(function() {});
     
@@ -104,10 +114,71 @@
             $(data.features).each(function(key, data) {
                 landmarks.addData(data);
             });
-            //neighborhoods.addTo(map);
-            //console.log(neighborhoods);
         }
     }).error(function() {});
+    
+    var tracts = new L.geoJson();
+    var tracts_layers;
+    var turf_polygons = {};
+    
+    var population_heat = L.heatLayer([], {radius: 30, max: 0.5, blur: 50}).addTo(map),
+        draw = true;
+        
+    var tract_centroids = {};
+    var tract_nearby = {};
+
+    $.ajax({
+        dataType: "json",
+        url: "geojson/everything_node.min.geojson",
+        success: function(data) {
+            console.log('Loaded tracts');
+            console.log(data);
+            $(data.features).each(function(key, data) {
+                tracts.addData(data);
+                
+                var turf_polygon = turf.polygon(data.geometry.coordinates[0]);
+                turf_polygons[key] = turf_polygon;
+                
+                if (turf_polygon.geometry.coordinates[0].length == 3) {
+                    var coords = [turf_polygon.geometry.coordinates[0][1], turf_polygon.geometry.coordinates[0][0]];
+                } else {
+                    var coords = [turf_polygon.geometry.coordinates[0][0][1], turf_polygon.geometry.coordinates[0][0][0]];
+                }
+                
+                //L.marker(coords).bindLabel(data.properties.C).addTo(map);
+                
+            });
+            //tracts.addTo(map);
+            
+            
+            tracts_layers = tracts.getLayers();
+            
+            
+            console.log("Length of tracts array: "+tracts_layers.length);
+                
+        }
+    }).error(function() {});
+    
+    $.ajax({
+        dataType: "json",
+        url: "json/tract_nearby_node.min.json",
+        success: function(data) {
+            console.log("Loaded tract neighbors");
+            tract_nearby = data;
+        }
+    }).error(function(jqXHR, textStatus, errorThrown) {
+        console.log("Error loading tract_nearby_node.json");
+        console.log(textStatus);
+        console.log(errorThrown);
+    });
+    
+    var populations = {};
+    $.getJSON( "json/population.json", function( data ) {
+        console.log('Loaded population');
+        $.each( data.data, function(key, val ) {
+            populations[val[12]] = val[13];
+        });
+    });
     
     var active_line = 'A';
     
@@ -121,16 +192,70 @@
             active_line = $(this).text();
         }
         regeneratePopups();
+	generateRouteDiagram();
     });
     
     var next_station_id = 0;
     
+    function generateNearbyJSON() {
+        var json = [];
+        
+        json.push(tract_nearby);
+        
+        //console.log(json);
+        
+        $("<a />", {
+            "download": "tract_nearby.json",
+            "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
+        }).appendTo("body")
+        .click(function() {
+            $(this).remove()
+        })[0].click()
+    }
+    
+    function generateJSON() {
+        var json = [];
+        for (station_index in stations) {
+            var station = stations[station_index];
+            var station_json = {"name": station["name"], "latlng": (station["marker"].getLatLng().lat, station["marker"].getLatLng().lng), "lines": {}};
+            for (line_index in station["lines"]) {
+                var line = station["lines"][line_index];
+                var line_pos = station_associations[line].indexOf(station);
+                station_json["lines"][line] = line_pos;
+            }
+            json.push(station_json);
+        }
+        //console.log(json);
+        $("<a />", {
+            "download": "data.json",
+            "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
+        }).appendTo("body")
+        .click(function() {
+            $(this).remove()
+        })[0].click()
+    }
+    
+    function generateRouteDiagram() {
+	var line_stations = station_associations[active_line];
+	$('#route-diagram').empty();
+	for (i = 0; i < line_stations.length; i++) {
+	    var station = line_stations[i];
+	    var station_entry = '<div class="route-diagram-entry"><div class="route-diagram-name">'+station['name']+'</div><div class="route-diagram-transfers">';
+	    for (j = 0; j < station['lines'].length; j++) {
+		if (station['lines'][j] != active_line) {
+		    station_entry += '<div class="subway-line-mini '+line_styles[station['lines'][j]]+'"><div class="height_fix"></div><div class="content">'+station['lines'][j]+'</div></div>';
+		}
+	    }
+	    station_entry += '</div></div>';
+	    $('#route-diagram').append(station_entry);
+	}
+    }
+
     function regeneratePopups() {
         var i;
         for (i = 0; i < stations.length; i++) {
-            console.log(i);
             var stationi = stations[i];
-            var popup = generatePopup(i, stationi['name'], stationi['info'], stationi['lines']);
+            var popup = generatePopup(i, stationi['name'], stationi['info'], stationi['lines'], stationi['riders']);
             stations[i]['marker'].unbindPopup();
             stations[i]['marker'].bindPopup(popup);
             station_popups[i] = popup;
@@ -159,21 +284,19 @@
         stations.splice(station_id,1);
         station_popups.splice(station_id,1);
         
-        console.log(station_associations['A']);
         regeneratePopups();
         
         for (line_index in station_lines) {
             var line = station_lines[line_index];
             var li = station_associations[line].indexOf(station);
             if (li > -1) {
-                
-                console.log('Station found, line '+line+' index '+li);
                 station_associations[line].splice(li, 1);
                 
                 drawCurves(line);
             }
         }
-        console.log(station_associations['A']);
+
+	generateRouteDiagram();
             
     }
     
@@ -200,15 +323,16 @@
             var line = station_lines[line_index];
             
             station['lines'].push(line);
-            station_associations[line].push(station);
+	    var insertion_point = findInsertionPoint(line, station);
+            station_associations[line].splice(insertion_point, 0, station);
             $('div.subway-lines').append('<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+line+'</div></div>');            
             drawCurves(line);
         }
-        
+	station['lines'] = station['lines'].sort();        
         stations[station_id] = station;
         
         regeneratePopups();
-            
+        generateRouteDiagram();
     }
     
     $(document).on('click', '.station-delete', deleteStation);
@@ -232,7 +356,7 @@
             stations[station_id]['marker'].unbindPopup();
             stations[station_id]['marker'].bindPopup(popup);
             station_popups[station_id] = popup;
-            
+            generateRouteDiagram(); 
         });
     });
 
@@ -242,7 +366,7 @@
     var geocodeService = L.esri.Geocoding.geocodeService();
     
     function cleanAddress(addr) {
-        addr = addr.replace(/(\d*-?\d*)\s/g, " ");
+        addr = addr.replace(/(\d*-?\d*)\s/g, " ").trim().replace(/^[NWES]\s/g, "");
         addr = addr.replace("Plz", "Plaza");
         addr = addr.trim();
         return addr;
@@ -254,20 +378,68 @@
         city = city.trim();
         return city;
     }
+
+    function findInsertionPoint(active_line, station_obj) {
+	var line_insertion_pos = 0;
+        var line_insertion_best = -1;
+	var line_length = station_associations[active_line].length;
+	if (line_length > 0) {
+	/*for (var q = 0; q <= line_length; q++) {
+	    var total_distance = 0;
+	    if (q == 0) {
+	    	var test_st = station_associations[active_line][q]['marker'].getLatLng();
+            	total_distance = 0.9*Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
+	    } else if (q == line_length) {
+	        var test_st = station_associations[active_line][q-1]['marker'].getLatLng();
+		total_distance = 0.9*Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
+	    } else {
+	        var test_st = station_associations[active_line][q]['marker'].getLatLng();
+		var distance_prev = Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
+	        test_st = station_associations[active_line][q-1]['marker'].getLatLng();
+		var distance_next = Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
+	        total_distance = Math.min(distance_prev, distance_next);
+	    }
+	    console.log(total_distance.toString() + " distance at pos "+q.toString());
+	    if (total_distance < line_insertion_best || line_insertion_best == -1) {
+		line_insertion_pos = q;
+		line_insertion_best = total_distance;
+	    }
+	}*/
+	var clone = station_associations[active_line].slice(0);
+	var line_insertion_best = -1;
+	var line_insertion_pos = 0;
+	for (var q = 0; q <= line_length; q++) {
+	    clone.splice(q, 0, station_obj);
+	    // Compute total distance
+	    var total_distance = 0;
+	    for (var r = 1; r <= line_length; r++) {
+	        var st_prev = clone[r-1]['marker'].getLatLng();
+	        var st_next = clone[r]['marker'].getLatLng();
+		total_distance += Math.pow((Math.pow(st_prev.lat - st_next.lat, 2) + Math.pow(st_prev.lng - st_next.lng, 2)), 0.5);
+	    }
+	    if (total_distance < line_insertion_best || line_insertion_best == -1) {
+		line_insertion_pos = q;
+		line_insertion_best = total_distance;
+	    }			
+	    clone = station_associations[active_line].slice(0);
+	}
+	}
+	return line_insertion_pos;
+    }
     
     var prev_coord = [L.latLng(0, 0), L.latLng(0,0)];
 
     var stations = [];
     var station_popups = [];
-    var station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': []};   
-    var curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': []};
-    var line_colors = {'A': '#0039A6', 'B': '#FF6319', 'C': '#0039A6', 'D': '#FF6319', 'E': '#0039A6', 'F': '#FF6319', 'G': '#6CBE45', 'J': '#996633', 'L': '#A7A9AC', 'M': '#FF6319', 'N': '#FCCC0A', 'Q': '#FCCC0A', 'R': '#FCCC0A', 'S': '#808183', 'Z': '#996633', '1': '#EE352E', '2': '#EE352E', '3': '#EE352E', '4': '#00933C', '5': '#00933C', '6': '#00933C', '7': '#B933AD'};
-    var line_styles = {'A': 'subway-blue', 'B': 'subway-orange', 'C': 'subway-blue', 'D': 'subway-orange', 'E': 'subway-blue', 'F': 'subway-orange', 'G': 'subway-light-green', 'J': 'subway-brown', 'L': 'subway-silver', 'M': 'subway-orange', 'N': 'subway-yellow', 'Q': 'subway-yellow', 'R': 'subway-yellow', 'S': 'subway-gray', 'Z': 'subway-brown', '1': 'subway-red', '2': 'subway-red', '3': 'subway-red', '4': 'subway-green', '5': 'subway-green', '6': 'subway-green', '7': 'subway-purple'};
+    var station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};   
+    var curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};
+    var line_colors = {'A': '#0039A6', 'B': '#FF6319', 'C': '#0039A6', 'D': '#FF6319', 'E': '#0039A6', 'F': '#FF6319', 'G': '#6CBE45', 'J': '#996633', 'L': '#A7A9AC', 'M': '#FF6319', 'N': '#FCCC0A', 'Q': '#FCCC0A', 'R': '#FCCC0A', 'S': '#808183', 'Z': '#996633', '1': '#EE352E', '2': '#EE352E', '3': '#EE352E', '4': '#00933C', '5': '#00933C', '6': '#00933C', '7': '#B933AD', 'SI': '#0039A6', 'T': '#1E9DBF', 'BQX': '#212121'};
+    var line_styles = {'A': 'subway-blue', 'B': 'subway-orange', 'C': 'subway-blue', 'D': 'subway-orange', 'E': 'subway-blue', 'F': 'subway-orange', 'G': 'subway-light-green', 'J': 'subway-brown', 'L': 'subway-silver', 'M': 'subway-orange', 'N': 'subway-yellow', 'Q': 'subway-yellow', 'R': 'subway-yellow', 'S': 'subway-gray', 'Z': 'subway-brown', '1': 'subway-red', '2': 'subway-red', '3': 'subway-red', '4': 'subway-green', '5': 'subway-green', '6': 'subway-green', '7': 'subway-purple', 'SI': 'subway-blue', 'T': 'subway-turquoise', 'BQX': 'subway-black'};
     
-    function generatePopup(station_id, station_name, station_info, lines) {
+    function generatePopup(station_id, station_name, station_info, lines, ridership) {
         var station_popup = L.popup({'className': 'station-popup'});
-        var station_content = '<div class="station-name" id="station-'+station_id+'">'+station_name+'</div>';
-        station_content += '<div class="station-content"><div class="station-info">'+station_info+'</div>';
+        var station_content = '<div class="station-name" id="station-'+station_id+'">'+station_name+'   <i class="fa fa-pencil" style="margin-left: 5px;" aria-hidden="true"></i></div>';
+        station_content += '<div class="station-content"><div class="station-info">'+station_info+'<br /><i class="fa fa-user" aria-hidden="true"></i> '+Math.round(ridership).toString()+'</div>';
         station_content += '<div class="station-info subway-lines">';
         for (i in lines) {
             var line = lines[i];
@@ -296,8 +468,6 @@
     
     function drawCurves(line) {
     
-        console.log('Drawing curves for '+line);
-    
         for (var i = 0; i < curves[line].length; i++) {
             curve = curves[line][i];
             
@@ -308,7 +478,6 @@
         var cp_lat;
         var cp_lng;
         var curve_options = {color: line_colors[line], weight: 8, fill: false};
-        console.log('Stations to include: '+station_associations[line].length);
         for (i = 1; i < station_associations[line].length; i++) {
             var st_prev = station_associations[line][i-1]['marker'].getLatLng();
             var st_curr = station_associations[line][i]['marker'].getLatLng();
@@ -334,50 +503,117 @@
         station_layer.bringToFront();
     }
     
+    function calculateRidership(latlng) {
+        var turf_pt = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "Point",
+                "coordinates": [latlng.lng, latlng.lat]
+            }
+        };
+        
+        var turf_circle = turf.buffer(turf_pt, 0.5, 'miles').features[0];
+        
+        var tract_index = 0;
+        var total_ridership = 0;
+        
+        var found_tract = false;
+        
+        //for (tract_index = 0; tract_index < tracts_layers.length; tract_index++) {
+        var pip_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], tracts, true);
+        if (pip_layer.length > 0) {
+            
+            //var layer = tracts_layers[tract_index];
+            var layer = pip_layer[0];
+            console.log("Found matching tract: "+layer.feature.properties.C);
+            console.log(layer);
+            found_tract = true;
+            var nearby_tracts = tract_nearby[tracts_layers.indexOf(layer)];
+            console.log(nearby_tracts);
+            var tracts_used = 0;
+            var ct_used = [];
+            for (nearby_index = 0; nearby_index < nearby_tracts.length; nearby_index++) {
+                var nearby_layer = tracts_layers[nearby_tracts[nearby_index]];
+                var census_tract = nearby_index;
+                var ct2010 = nearby_layer.feature.properties.C;
+                console.log("Checking tract "+ct2010+" at pos "+nearby_tracts[nearby_index]);
+                var overlap_polygon = turf.intersect(nearby_layer.feature, turf_circle);
+                if (ct_used.indexOf(ct2010) == -1) {
+                    if (overlap_polygon != undefined) {
+                        tracts_used += 1;
+                        console.log(nearby_layer.feature.properties);
+                        var tract_population = populations[ct2010];
+                        if (tract_population == 0) {
+                            //console.log("Empty tract! "+census_tract);
+                        } else {
+                            //console.log("Tract "+census_tract+" has population "+tract_population);
+                        }
+                        //console.log("Tract id "+tract_index.toString());
+                        //console.log("Census tract "+nearby_layer.feature.properties.CT2010);
+                        //console.log("Population is "+tract_population);
+                        var overlap_area = turf.area(overlap_polygon);
+                        var tract_area = turf.area(nearby_layer.feature);
+                        var ridership = tract_population * overlap_area/tract_area;
+                        //console.log("Ridership is "+ridership);
+                        total_ridership += ridership;
+                    } else {
+                        //console.log("Undefined overlap polygon with "+ct2010);
+                    }
+                    ct_used.push(ct2010);
+                } else {
+                    console.log("Already used "+ct2010);
+                    //console.log(nearby_layer.feature.properties);
+                }
+            }
+            console.log((100.0*tracts_used/nearby_tracts.length).toString() + "% neighbors used");
+        }
+        return total_ridership;
+    }
+    
     function handleMapClick(e) {
         console.log('map click');
-        geocodeService.reverse().distance(500).latlng(e.latlng).run(function(error, result) {
+	var latlng = e.latlng;
+	var latlng_orig = e.latlng;
+        geocodeService.reverse().distance(500).latlng(latlng).run(function(error, result) {
             var station_name = '';
             var station_info = '';
-            var latlng = e.latlng;
             var geocode_success = true;
             if (error) {
                 console.log(error);
                 geocode_success = false;
             } else {
                 var geocoded_name = result.address.Address;
-                var city = result.address.City;
-                
+                if (geocoded_name == null) {
+		    geocoded_name = "";
+		}
+		var city = result.address.City;
                 station_name = cleanAddress(geocoded_name);
-                
+		//console.log(geocoded_name + " renamed to " + station_name);                
                 if (city != "New York") {
                     station_name = cleanCity(city) + ' - ' + station_name;
                     station_info += cleanCity(city);
                 }
-                latlng = result.latlng;
+                //latlng = result.latlng;
             }
 
             var enc_boroughs = [];
             var enc_neighborhoods = [];
             var enc_neighborhoods_always_label = ['Astoria'];
-            var enc_neighborhoods_only_label = ['Roosevelt Island', 'Governors Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
+            var enc_neighborhoods_only_label = ['Roosevelt Island', 'Governors Island', 'Randall\'s Island', 'North Brother Island', 'South Brother Island', 'Rikers Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
             var enc_landmarks = [];
-            
+	    var enc_landmarks_only_label = ['Ellis Island', 'Liberty Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];            
             var neighborhood_in_station_name = false;
             
-            neighborhoods.eachLayer(function (layer) {
-                if (layer.getBounds().contains(latlng)) {
-                    enc_boroughs.push(layer.feature.properties.borough);
-                    enc_neighborhoods.push(layer.feature.properties.neighborhood);
-                    
-                }
-            });
+            var neighborhood_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], neighborhoods, true);
+            if (neighborhood_layer.length > 0) {
+                enc_boroughs.push(neighborhood_layer[0].feature.properties.borough);
+                enc_neighborhoods.push(neighborhood_layer[0].feature.properties.neighborhood);
+            }
+            
             if (enc_neighborhoods.length > 0) {
-                console.log(enc_neighborhoods);
                 var enc_borough = enc_boroughs[0];
                 var enc_neighborhood = enc_neighborhoods[0];
-                console.log(enc_neighborhood);
-                console.log(enc_neighborhoods_always_label.indexOf(enc_neighborhood));
 
                 if (enc_borough != "Manhattan" && station_name.match(/\d/g)) {
                     station_name = enc_neighborhood + ' - ' + station_name;
@@ -402,22 +638,24 @@
                 station_info += '<br />';
                 station_info += enc_neighborhood;
             }
-            
-            landmarks.eachLayer(function (layer) {
-                if (layer.getBounds().contains(latlng)) {
-                    enc_landmarks.push(layer.feature.properties.name);
-                    
-                }
-            });
+            var landmark_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], landmarks, true);
+            if (landmark_layer.length > 0) {
+                enc_landmarks.push(landmark_layer[0].feature.properties.name);
+            }
             if (enc_landmarks.length > 0) {
                 station_name = station_name + ' - ' + enc_landmarks[0];
+		if (enc_landmarks_only_label.indexOf(enc_landmarks[0]) != -1) {
+		     station_name = enc_landmarks[0];
+		}
             }
-                
-
-
-            station = L.circleMarker(latlng, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(8);
+            
+            
+            var ridership = calculateRidership(latlng_orig);
+            console.log(ridership);
+            
+            station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(6);
             var station_id = stations.length;
-            var station_popup = generatePopup(station_id, station_name, station_info, [active_line]);
+            var station_popup = generatePopup(station_id, station_name, station_info, [active_line], ridership);
             
             if (active_line != "None") {
                 station.on('click', function(s_e) {
@@ -432,9 +670,11 @@
                 });
                 //station.addTo(station_layer);
 
-                var station_obj = {"marker": station, "name": station_name, "info": station_info, "lines": [active_line]};
+                
+                var station_obj = {"marker": station, "name": station_name, "info": station_info, "lines": [active_line], "riders": ridership};
                 stations.push(station_obj);
-                station_associations[active_line].push(station_obj);
+		var line_insertion_pos = findInsertionPoint(active_line, station_obj);
+                station_associations[active_line].splice(line_insertion_pos, 0, station_obj);
                 
                 
                 drawCurves(active_line);
@@ -444,6 +684,9 @@
                 station_popups.push(station_popup);
                 station.bindPopup(station_popup).openPopup();
             }
+
+	    generateRouteDiagram();
+
         });
     }
 

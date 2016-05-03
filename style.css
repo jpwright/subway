@@ -193,6 +193,32 @@ textarea.station-name-edit {
     background-color: #B933AD;
 }
 
+.subway-turquoise {
+    background-color: #1E9DBF;
+}
+
+.subway-black {
+    background-color: #212121;
+    font-size: 10px;
+    margin-top: -5px;
+}
+
+#route-diagram {
+    overflow-y: scroll;
+    padding-right: 20px;
+    max-height: 200px;
+}
+
+.route-diagram-name {
+    font-size: 12px;
+    display: inline-block;
+}
+
+.route-diagram-transfers {
+    display: inline-block;
+    margin-left: 5px;
+}
+
 #options {
     position: absolute;
     padding: 10px;
@@ -201,6 +227,8 @@ textarea.station-name-edit {
     background: rgba(0, 0, 0, 0.5);
     color: white;
     z-index: 5;
+    height: 90%;
+    overflow: hidden;
 }
 
 #card {
