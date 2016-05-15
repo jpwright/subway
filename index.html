@@ -27,7 +27,7 @@
     <script src="js/leaflet.curve.js"></script>
     <script src='js/leaflet-heat.js'></script>
     <script src='js/leaflet.label.js'></script>
-    <script src='leaflet-pip/leaflet-pip.js'></script>
+    <script src='js/leaflet-pip/leaflet-pip.js'></script>
     <script src='js/turf.min.js'></script>
     
     <div id="map">
@@ -64,6 +64,20 @@
     </div>
 
     </div>
+    
+    
+    <div id="system-status">
+        <div id="metrocard">
+        <i class="fa fa-credit-card" aria-hidden="true"></i>
+        <span id="metrocard-cost"></span>
+        </div>
+        <div id="ridership">
+        <i class="fa fa-user" aria-hidden="true"></i>
+        <span id="system-ridership"></span>
+        </div>
+        <div id="game-save" class="game-button">Save</div>
+    </div>
+    
     <script>
     
     var mapbox_token = 'pk.eyJ1IjoianB3cmlnaHQwIiwiYSI6ImNpbjZ1Y212aTA2dGR1ZGtzNHNxZWRkdjIifQ.OgGN3EIjNNB8JsbNRXqqAg';
@@ -71,10 +85,21 @@
     var station_layer = L.featureGroup();
     var curve_layer = L.featureGroup();
     
-    
+    var geo_range_lat = 0.8;
+    var geo_range_lon = 1.0;
+
+    var lat_min = 40.713 - geo_range_lat/2.0;
+    var lat_max = 40.713 + geo_range_lat/2.0;
+    var lon_min = -74.006 - geo_range_lon/2.0;
+    var lon_max = -74.006 + geo_range_lon/2.0;
+
+    var voxels_dim = 500;
+    var voxels_res_lat = geo_range_lat / voxels_dim;
+    var voxels_res_lon = geo_range_lon / voxels_dim;
+    var voxels_total = voxels_dim * voxels_dim;
     
     var map = L.map('map', {
-        fullscreenControl: true
+        fullscreenControl: true,
     }).setView([40.713, -74.006], 13);
 
     curve_layer.setZIndex(2).addTo(map);
@@ -83,7 +108,7 @@
     map.addLayer(curve_layer);
     map.addLayer(station_layer);
     
-    L.control.scale().addTo(map);
+    //L.control.scale().addTo(map);
     
     var tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token='+mapbox_token, {
         maxZoom: 18,
@@ -159,6 +184,8 @@
         }
     }).error(function() {});
     
+    
+    
     $.ajax({
         dataType: "json",
         url: "json/tract_nearby_node.min.json",
@@ -180,6 +207,20 @@
         });
     });
     
+    var demand = [];
+    $.getJSON( "json/demand.json", function( data ) {
+        console.log('Loaded demand');
+        demand = data;
+        
+        for (var i = 200; i < 300; i++) {
+            for (var j = 200; j < 300; j++) {
+                var bounds = [[lat_min + i*voxels_res_lat, lon_min + j*voxels_res_lon], [lat_min + (i+1)*voxels_res_lat, lon_min + (j+1)*voxels_res_lon]];
+                L.rectangle(bounds, {stroke: false, fillOpacity: demand[i][j]/2000.0}).bindLabel("i="+i.toString()+", j="+j.toString()+", d="+demand[i][j].toString(), { noHide: true }).addTo(map);
+            }
+        }
+        
+    });
+    
     var active_line = 'A';
     
     $('.subway-clickable').click(function() {
@@ -193,6 +234,10 @@
         }
         regeneratePopups();
 	generateRouteDiagram();
+    });
+    
+    $('#game-save').click(function() {
+        generateGameJSON();
     });
     
     var next_station_id = 0;
@@ -213,11 +258,11 @@
         })[0].click()
     }
     
-    function generateJSON() {
+    function generateGameJSON() {
         var json = [];
         for (station_index in stations) {
             var station = stations[station_index];
-            var station_json = {"name": station["name"], "latlng": (station["marker"].getLatLng().lat, station["marker"].getLatLng().lng), "lines": {}};
+            var station_json = {"name": station["name"], "latlng": (station["marker"].getLatLng().lat, station["marker"].getLatLng().lng), "lines": {}, "riders": station["riders"]};
             for (line_index in station["lines"]) {
                 var line = station["lines"][line_index];
                 var line_pos = station_associations[line].indexOf(station);
@@ -227,12 +272,18 @@
         }
         //console.log(json);
         $("<a />", {
-            "download": "data.json",
+            "download": "subway-game.json",
             "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
         }).appendTo("body")
         .click(function() {
             $(this).remove()
         })[0].click()
+    }
+    
+    function loadGameJSON() {
+        $.getJSON( "subway-game.json", function( data ) {
+            initializeGameState();
+        });
     }
     
     function generateRouteDiagram() {
@@ -297,6 +348,7 @@
         }
 
 	generateRouteDiagram();
+	calculateTotalRidership();
             
     }
     
@@ -431,10 +483,31 @@
 
     var stations = [];
     var station_popups = [];
-    var station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};   
-    var curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};
+    var station_associations = {};
+    var curves = {};
+    
+    function initializeGameState() {
+        stations = [];
+        station_popups = [];
+        station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};   
+        curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};
+    }
+    
+    initializeGameState();
+    
     var line_colors = {'A': '#0039A6', 'B': '#FF6319', 'C': '#0039A6', 'D': '#FF6319', 'E': '#0039A6', 'F': '#FF6319', 'G': '#6CBE45', 'J': '#996633', 'L': '#A7A9AC', 'M': '#FF6319', 'N': '#FCCC0A', 'Q': '#FCCC0A', 'R': '#FCCC0A', 'S': '#808183', 'Z': '#996633', '1': '#EE352E', '2': '#EE352E', '3': '#EE352E', '4': '#00933C', '5': '#00933C', '6': '#00933C', '7': '#B933AD', 'SI': '#0039A6', 'T': '#1E9DBF', 'BQX': '#212121'};
     var line_styles = {'A': 'subway-blue', 'B': 'subway-orange', 'C': 'subway-blue', 'D': 'subway-orange', 'E': 'subway-blue', 'F': 'subway-orange', 'G': 'subway-light-green', 'J': 'subway-brown', 'L': 'subway-silver', 'M': 'subway-orange', 'N': 'subway-yellow', 'Q': 'subway-yellow', 'R': 'subway-yellow', 'S': 'subway-gray', 'Z': 'subway-brown', '1': 'subway-red', '2': 'subway-red', '3': 'subway-red', '4': 'subway-green', '5': 'subway-green', '6': 'subway-green', '7': 'subway-purple', 'SI': 'subway-blue', 'T': 'subway-turquoise', 'BQX': 'subway-black'};
+    
+    function calculateTotalRidership() {
+        var r = 0;
+        for (i in stations) {
+            r += stations[i]['riders'];
+        }
+        $('#system-ridership').text(Math.round(r).toString());
+        
+        var mc_cost = stations.length*1000000.0/r;
+        $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
+    }
     
     function generatePopup(station_id, station_name, station_info, lines, ridership) {
         var station_popup = L.popup({'className': 'station-popup'});
@@ -504,6 +577,7 @@
     }
     
     function calculateRidership(latlng) {
+        /*
         var turf_pt = {
             "type": "Feature",
             "properties": {},
@@ -512,37 +586,66 @@
                 "coordinates": [latlng.lng, latlng.lat]
             }
         };
-        
-        var turf_circle = turf.buffer(turf_pt, 0.5, 'miles').features[0];
+        */
+        //var turf_circle = turf.buffer(turf_pt, 0.5, 'miles').features[0];
         
         var tract_index = 0;
         var total_ridership = 0;
         
         var found_tract = false;
         
-        //for (tract_index = 0; tract_index < tracts_layers.length; tract_index++) {
+        // New method: Voxels
+        
+        
+        
+        var voxel_i = Math.round((latlng.lat - lat_min)/voxels_res_lat);
+        var voxel_j = Math.round((latlng.lng - lon_min)/voxels_res_lon);
+        
+        console.log("Centered on i="+voxel_i+",j="+voxel_j);
+        
+        total_ridership += demand[voxel_i][voxel_j+2];
+        
+        total_ridership += demand[voxel_i+1][voxel_j+1];
+        total_ridership += demand[voxel_i][voxel_j+1];
+        total_ridership += demand[voxel_i-1][voxel_j+1];
+        
+        total_ridership += demand[voxel_i+2][voxel_j];
+        total_ridership += demand[voxel_i+1][voxel_j];
+        total_ridership += demand[voxel_i][voxel_j];
+        total_ridership += demand[voxel_i-1][voxel_j];
+        total_ridership += demand[voxel_i-2][voxel_j];
+        
+        total_ridership += demand[voxel_i+1][voxel_j-1];
+        total_ridership += demand[voxel_i][voxel_j-1];
+        total_ridership += demand[voxel_i-1][voxel_j-1];
+        
+        total_ridership += demand[voxel_i][voxel_j-2];
+        
+        // Old method: PIP + Neighbors
+        
+        /*
         var pip_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], tracts, true);
         if (pip_layer.length > 0) {
             
             //var layer = tracts_layers[tract_index];
             var layer = pip_layer[0];
-            console.log("Found matching tract: "+layer.feature.properties.C);
+            //console.log("Found matching tract: "+layer.feature.properties.C);
             console.log(layer);
-            found_tract = true;
+            //found_tract = true;
             var nearby_tracts = tract_nearby[tracts_layers.indexOf(layer)];
-            console.log(nearby_tracts);
+            //console.log(nearby_tracts);
             var tracts_used = 0;
             var ct_used = [];
             for (nearby_index = 0; nearby_index < nearby_tracts.length; nearby_index++) {
                 var nearby_layer = tracts_layers[nearby_tracts[nearby_index]];
                 var census_tract = nearby_index;
                 var ct2010 = nearby_layer.feature.properties.C;
-                console.log("Checking tract "+ct2010+" at pos "+nearby_tracts[nearby_index]);
+                //console.log("Checking tract "+ct2010+" at pos "+nearby_tracts[nearby_index]);
                 var overlap_polygon = turf.intersect(nearby_layer.feature, turf_circle);
                 if (ct_used.indexOf(ct2010) == -1) {
                     if (overlap_polygon != undefined) {
                         tracts_used += 1;
-                        console.log(nearby_layer.feature.properties);
+                        //console.log(nearby_layer.feature.properties);
                         var tract_population = populations[ct2010];
                         if (tract_population == 0) {
                             //console.log("Empty tract! "+census_tract);
@@ -562,12 +665,14 @@
                     }
                     ct_used.push(ct2010);
                 } else {
-                    console.log("Already used "+ct2010);
+                    //console.log("Already used "+ct2010);
                     //console.log(nearby_layer.feature.properties);
                 }
             }
             console.log((100.0*tracts_used/nearby_tracts.length).toString() + "% neighbors used");
         }
+        */
+        
         return total_ridership;
     }
     
@@ -651,7 +756,7 @@
             
             
             var ridership = calculateRidership(latlng_orig);
-            console.log(ridership);
+            //console.log(ridership);
             
             station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(6);
             var station_id = stations.length;
@@ -686,6 +791,7 @@
             }
 
 	    generateRouteDiagram();
+	    calculateTotalRidership();
 
         });
     }

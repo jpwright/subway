@@ -1,7 +1,7 @@
 var jsonfile = require('jsonfile');
 var turf = require('turf');
 
-var input_file = 'geojson/everything_node.geojson';
+var input_file = 'geojson/everything_node.min.geojson';
 
 var turf_polygons = {};
 var tract_centroids = {};
@@ -52,7 +52,7 @@ jsonfile.readFile(input_file, function(err, data) {
                 if (tcc != tract_index) {
                     td = turf.distance(centroid, cc, 'miles');
                 }
-                if (tcc == tract_index || td <= 1.0) {
+                if (tcc == tract_index || td <= 0.75) {
                     if (!(tract_index in tract_nearby)) {
                         tract_nearby[tract_index] = [tcc];
                     } else {
@@ -60,11 +60,6 @@ jsonfile.readFile(input_file, function(err, data) {
                     }
                 }
             }
-            
-            if (data.features[tract_index].properties.C == "031703") {
-                console.log(tract_nearby[tract_index]);
-            }
-            
             pct = (100.0*tract_index/data.features.length)
             if (pct - last_pct > 1) {
                 console.log(pct.toString() + "% done");
