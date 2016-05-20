@@ -85,6 +85,9 @@
     var station_layer = L.featureGroup();
     var curve_layer = L.featureGroup();
     
+    var CURVE_THRESHOLD = 0.002; // Max overshoot from curve momentum.
+    var SHARED_STRETCH_THRESHOLD = 4; // Max number of "local" stations in a shared stretch.
+    
     var geo_range_lat = 0.8;
     var geo_range_lon = 1.0;
 
@@ -151,73 +154,20 @@
         
     var tract_centroids = {};
     var tract_nearby = {};
-
-    $.ajax({
-        dataType: "json",
-        url: "geojson/everything_node.min.geojson",
-        success: function(data) {
-            console.log('Loaded tracts');
-            console.log(data);
-            $(data.features).each(function(key, data) {
-                tracts.addData(data);
-                
-                var turf_polygon = turf.polygon(data.geometry.coordinates[0]);
-                turf_polygons[key] = turf_polygon;
-                
-                if (turf_polygon.geometry.coordinates[0].length == 3) {
-                    var coords = [turf_polygon.geometry.coordinates[0][1], turf_polygon.geometry.coordinates[0][0]];
-                } else {
-                    var coords = [turf_polygon.geometry.coordinates[0][0][1], turf_polygon.geometry.coordinates[0][0][0]];
-                }
-                
-                //L.marker(coords).bindLabel(data.properties.C).addTo(map);
-                
-            });
-            //tracts.addTo(map);
-            
-            
-            tracts_layers = tracts.getLayers();
-            
-            
-            console.log("Length of tracts array: "+tracts_layers.length);
-                
-        }
-    }).error(function() {});
-    
-    
-    
-    $.ajax({
-        dataType: "json",
-        url: "json/tract_nearby_node.min.json",
-        success: function(data) {
-            console.log("Loaded tract neighbors");
-            tract_nearby = data;
-        }
-    }).error(function(jqXHR, textStatus, errorThrown) {
-        console.log("Error loading tract_nearby_node.json");
-        console.log(textStatus);
-        console.log(errorThrown);
-    });
-    
-    var populations = {};
-    $.getJSON( "json/population.json", function( data ) {
-        console.log('Loaded population');
-        $.each( data.data, function(key, val ) {
-            populations[val[12]] = val[13];
-        });
-    });
     
     var demand = [];
     $.getJSON( "json/demand.json", function( data ) {
         console.log('Loaded demand');
         demand = data;
         
+        /*
         for (var i = 200; i < 300; i++) {
             for (var j = 200; j < 300; j++) {
                 var bounds = [[lat_min + i*voxels_res_lat, lon_min + j*voxels_res_lon], [lat_min + (i+1)*voxels_res_lat, lon_min + (j+1)*voxels_res_lon]];
                 L.rectangle(bounds, {stroke: false, fillOpacity: demand[i][j]/2000.0}).bindLabel("i="+i.toString()+", j="+j.toString()+", d="+demand[i][j].toString(), { noHide: true }).addTo(map);
             }
         }
+        */
         
     });
     
@@ -262,7 +212,7 @@
         var json = [];
         for (station_index in stations) {
             var station = stations[station_index];
-            var station_json = {"name": station["name"], "latlng": (station["marker"].getLatLng().lat, station["marker"].getLatLng().lng), "lines": {}, "riders": station["riders"]};
+            var station_json = {"name": station["name"], "info": station["info"], "latlng": [station["marker"].getLatLng().lat, station["marker"].getLatLng().lng], "lines": {}, "riders": station["riders"]};
             for (line_index in station["lines"]) {
                 var line = station["lines"][line_index];
                 var line_pos = station_associations[line].indexOf(station);
@@ -283,6 +233,51 @@
     function loadGameJSON() {
         $.getJSON( "subway-game.json", function( data ) {
             initializeGameState();
+            console.log(data);
+            console.log(stations);
+            console.log(station_associations);
+            for (i in data) {
+                var station = data[i];
+                station["marker"] = createStationMarker(station["latlng"]);
+                var station_line_pos = station["lines"];
+                var station_lines = [];
+                for (line in station_line_pos) {
+                    station_lines.push(line);
+                }
+                station["lines"] = station_lines;
+                for (line in station_line_pos) {
+                    station_associations[line][station_line_pos[line]] = station;
+                }
+                station["marker"].on('click', function(s_e) {
+                    
+                    // Disable new station creation.
+                    map.off('click', handleMapClick);
+                    
+                    // Wait a second before you can create a new station.
+                    setTimeout(function() {
+                        map.on('click', handleMapClick);
+                    }, 1000);
+                });
+                station["marker"].bindPopup(station_popup);
+                
+                stations.push(station);
+                var station_popup = generatePopup(stations.length, station["name"], station["info"], station_lines, station["riders"]);
+            
+                station_popups.push(station_popup);
+                
+            }
+            
+        
+            for (line in station_associations) {
+            
+                if (station_associations[line].length > 1) {
+                    drawCurves(line);
+                }
+            }
+            regeneratePopups();
+            calculateSharedStretches();
+            generateRouteDiagram();
+            calculateTotalRidership();
         });
     }
     
@@ -337,6 +332,9 @@
         
         regeneratePopups();
         
+        
+        calculateSharedStretches();
+        
         for (line_index in station_lines) {
             var line = station_lines[line_index];
             var li = station_associations[line].indexOf(station);
@@ -346,7 +344,6 @@
                 drawCurves(line);
             }
         }
-
 	generateRouteDiagram();
 	calculateTotalRidership();
             
@@ -371,6 +368,7 @@
         }
         
         
+        
         for (line_index in station_lines) {
             var line = station_lines[line_index];
             
@@ -378,11 +376,16 @@
 	    var insertion_point = findInsertionPoint(line, station);
             station_associations[line].splice(insertion_point, 0, station);
             $('div.subway-lines').append('<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+line+'</div></div>');            
-            drawCurves(line);
+            
         }
 	station['lines'] = station['lines'].sort();        
         stations[station_id] = station;
         
+        calculateSharedStretches();
+        
+        for (line_index in station_lines) {
+            drawCurves(line);
+        }
         regeneratePopups();
         generateRouteDiagram();
     }
@@ -485,12 +488,14 @@
     var station_popups = [];
     var station_associations = {};
     var curves = {};
+    var shared_stretches = [];
     
     function initializeGameState() {
         stations = [];
         station_popups = [];
         station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};   
         curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'T': [], 'BQX': []};
+        shared_stretches = [];
     }
     
     initializeGameState();
@@ -539,6 +544,81 @@
     
     map.on('click', handleMapClick);
     
+    function isIn2dArray(arr, i, j) {
+        for (var a = 0; a < arr.length; a++) {
+            var p = arr[a];
+            if (p.indexOf(i) > -1 && p.indexOf(j) > -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    function calculateSharedStretches() {
+        shared_stretches = [];
+        var st_comparisons_made = [];
+        for (var i = 0; i < stations.length; i++) {
+            for (var j = 0; j < stations.length; j++) {
+            
+                if (!isIn2dArray(st_comparisons_made, i, j)) {
+                    st_comparisons_made.push([i,j]);
+                    // They must share at least two lines
+                    var common_lines = [];
+                    for (var k = 0; k < stations[i].lines.length; k++) {
+                        if (stations[j].lines.indexOf(stations[i].lines[k]) > -1) {
+                            common_lines.push(stations[i].lines[k]);
+                        }
+                    }
+                    
+                    var st_shared_stretch = [];
+                    var st_shared_used = [];
+                    if (common_lines.length > 1 && i != j) {
+                        //console.log("Stations ("+i.toString()+", "+j.toString()+") have common lines: ");
+                        //console.log(common_lines);
+                        var comparisons_made = [];
+                        for (var m = 0; m < common_lines.length; m++) {
+                            for (var n = 0; n < common_lines.length; n++) {
+                                var comparison = [m, n];
+                                if (!isIn2dArray(comparisons_made, m, n)) {
+                                    comparisons_made.push(comparison);
+                                    
+                                    // Process line pair
+                                    
+                                    st_i_m = station_associations[common_lines[m]].indexOf(stations[i]);
+                                    st_i_n = station_associations[common_lines[n]].indexOf(stations[i]);
+                                    st_j_m = station_associations[common_lines[m]].indexOf(stations[j]);
+                                    st_j_n = station_associations[common_lines[n]].indexOf(stations[j]);
+                                    
+                                    // At least one side has to have a diff of 1.
+                                    diff_m = Math.abs(st_i_m - st_j_m);
+                                    diff_n = Math.abs(st_i_n - st_j_n);
+                                    
+                                    if ((diff_m == 1 && diff_n <= SHARED_STRETCH_THRESHOLD) || (diff_n == 1 && diff_m <= SHARED_STRETCH_THRESHOLD)) {
+                                        if (st_shared_used.indexOf(m) == -1) {
+                                            st_shared_used.push(m);
+                                            st_shared_stretch.push({"line": common_lines[m], "start": Math.min(st_i_m, st_j_m), "end": Math.max(st_i_m, st_j_m)});
+                                        }
+                                        if (st_shared_used.indexOf(n) == -1) {
+                                            st_shared_used.push(n);
+                                            st_shared_stretch.push({"line": common_lines[n], "start": Math.min(st_i_n, st_j_n), "end": Math.max(st_i_n, st_j_n)});
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                        
+                        if (st_shared_used.length > 0) {
+                            shared_stretches.push(st_shared_stretch);
+                        }
+                        
+                    }
+                }
+                
+            }
+        }
+    }
+    
     function drawCurves(line) {
     
         for (var i = 0; i < curves[line].length; i++) {
@@ -552,23 +632,84 @@
         var cp_lng;
         var curve_options = {color: line_colors[line], weight: 8, fill: false};
         for (i = 1; i < station_associations[line].length; i++) {
-            var st_prev = station_associations[line][i-1]['marker'].getLatLng();
-            var st_curr = station_associations[line][i]['marker'].getLatLng();
-            if (i == 2) {
-                var st_dir = station_associations[line][i-2]['marker'].getLatLng();
-                cp_lat = st_dir.lat;
-                cp_lng = st_dir.lng;
+        
+            console.log("Drawing for station "+i.toString());
+        
+            var line_to_follow = line;
+            var line_index_start = i-1;
+            var line_index_end = i;
+        
+            // Check if this station is involved in a Shared Stretch.
+            for (var k = 0; k < shared_stretches.length; k++) {
+                var ss = shared_stretches[k];
+                var longest_line = {};
+                var longest_line_length = 0;
+                var line_to_use = false;
+                for (var m = 0; m < ss.length; m++) {
+                    var ss_line = ss[m];
+                    var ss_line_length = Math.abs(ss_line.start - ss_line.end);
+                    
+                    if (ss_line_length > longest_line_length) {
+                        longest_line_length = ss_line_length;
+                        longest_line = ss_line;
+                    }
+                    
+                    if (ss_line.line == line && ss_line.start == i-1) {
+                        // This shared stretch is relevant.
+                        console.log("Drawing based on a shared stretch");
+                        line_to_use = true;
+                    }
+                }
+                
+                // If we found a line to use, follow the longest line.
+                if (line_to_use) {
+                    line_to_follow = longest_line.line;
+                    line_index_start = Math.min(longest_line.start, longest_line.end);
+                    line_index_end = Math.max(longest_line.start, longest_line.end);
+                }
+                
             }
-            if (i > 1) {
-                cp_lat = st_prev.lat + (st_prev.lat - cp_lat)*0.3;
-                cp_lng = st_prev.lng + (st_prev.lng - cp_lng)*0.3;
-                curve = L.curve(['M', [st_prev.lat, st_prev.lng], 'Q', [cp_lat, cp_lng], [st_curr.lat, st_curr.lng]], curve_options);
-            } else {
-                curve = L.curve(['M', [st_prev.lat, st_prev.lng], 'L', [st_curr.lat, st_curr.lng]], curve_options);
-            }
+        
+            
+        
 
-            curve_layer.addLayer(curve);
-            curves[line].push(curve);
+            for (var z = line_index_start; z < line_index_end; z++) {
+                var marker_start = station_associations[line_to_follow][z]['marker'];
+                var marker_end = station_associations[line_to_follow][z+1]['marker'];
+                var st_start = marker_start.getLatLng();
+                var st_end = marker_end.getLatLng();
+                
+
+                if (z == 1) {
+                    var st_dir = station_associations[line][z-1]['marker'].getLatLng();
+                    cp_lat = st_dir.lat;
+                    cp_lng = st_dir.lng;
+                }
+                if (z > 0) {
+                    var lat_os = (st_start.lat - cp_lat)*0.3;
+                    var lng_os = (st_start.lng - cp_lng)*0.3
+                    if (lat_os > CURVE_THRESHOLD) {
+                        lat_os = CURVE_THRESHOLD;
+                    }
+                    if (lat_os < -1.0*CURVE_THRESHOLD) {
+                        lat_os = -1.0*CURVE_THRESHOLD;
+                    }
+                    if (lng_os > CURVE_THRESHOLD) {
+                        lng_os = CURVE_THRESHOLD;
+                    }
+                    if (lng_os < -1.0*CURVE_THRESHOLD) {
+                        lng_os = -1.0*CURVE_THRESHOLD;
+                    }
+                    cp_lat = st_start.lat + lat_os;
+                    cp_lng = st_start.lng + lng_os;
+                    curve = L.curve(['M', [st_start.lat, st_start.lng], 'Q', [cp_lat, cp_lng], [st_end.lat, st_end.lng]], curve_options);
+                } else {
+                    curve = L.curve(['M', [st_start.lat, st_start.lng], 'L', [st_end.lat, st_end.lng]], curve_options);
+                }
+
+                curve_layer.addLayer(curve);
+                curves[line].push(curve);
+            }
             
             
         }
@@ -676,6 +817,12 @@
         return total_ridership;
     }
     
+    function createStationMarker(latlng_orig) {
+        var station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(6);
+        station_layer.addLayer(station);
+        return station;
+    }
+    
     function handleMapClick(e) {
         console.log('map click');
 	var latlng = e.latlng;
@@ -758,7 +905,7 @@
             var ridership = calculateRidership(latlng_orig);
             //console.log(ridership);
             
-            station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(6);
+            station = createStationMarker(latlng_orig);
             var station_id = stations.length;
             var station_popup = generatePopup(station_id, station_name, station_info, [active_line], ridership);
             
@@ -782,14 +929,19 @@
                 station_associations[active_line].splice(line_insertion_pos, 0, station_obj);
                 
                 
-                drawCurves(active_line);
                 
-                station_layer.addLayer(station);
+                
                 station_layer.bringToFront();
                 station_popups.push(station_popup);
                 station.bindPopup(station_popup).openPopup();
             }
 
+            calculateSharedStretches();
+            
+            if (active_line != "None") {
+                drawCurves(active_line);
+            }
+            
 	    generateRouteDiagram();
 	    calculateTotalRidership();
 
