@@ -79,12 +79,26 @@ textarea.station-name-edit {
 }
 
 .station-build {
+    right: 85px;
+}
+
+.station-transfer {
     right: 55px;
+    width: 15px;
+    text-align: center;
 }
 
 .subway-lines {
     width: 100%;
     margin: 0 auto;
+}
+
+.subway-line-group {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid #999;
 }
 
 .subway-line {
@@ -177,6 +191,11 @@ textarea.station-name-edit {
     color: black;
 }
 
+.subway-light-yellow {
+    background-color: #FFF200;
+    color: black;
+}
+
 .subway-gray {
     background-color: #808183;
 }
@@ -229,6 +248,7 @@ textarea.station-name-edit {
     z-index: 5;
     height: 90%;
     overflow: hidden;
+    width: 25%;
 }
 
 #system-status {
