@@ -31,15 +31,19 @@
     <script src='js/leaflet-pip.js'></script>
     <script src='js/turf.min.js'></script>
 
+    <script src='js/subway-settings.js'></script>
     <script src='js/subway-utils.js'></script>
     <script src='js/subway-files.js'></script>
     <script src='js/subway-id-generator.js'></script>
     <script src='js/subway-station.js'></script>
     <script src='js/subway-line.js'></script>
+    <script src='js/subway-geocoding.js'></script>
+    <script src='js/subway-map-events.js'></script>
+    <script src='js/subway-data.js'></script>
 
     <!-- Learn about this code on MDN: https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications -->
 
-    <input type="file" id="fileElem" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
+    <input type="file" id="fileElem" multiple accept="image/*" style="display:none" onchange="handle_files(this.files)">
 
 
     <div id="map">
@@ -126,22 +130,6 @@
     var station_layer = L.featureGroup();
     var curve_layer = L.featureGroup();
 
-    var CURVE_THRESHOLD = 0.005; // Max overshoot from curve momentum.
-    var SHARED_STRETCH_THRESHOLD = 8; // Max number of "local" stations in a shared stretch.
-
-    var geo_range_lat = 0.8;
-    var geo_range_lon = 1.0;
-
-    var lat_min = 40.713 - geo_range_lat/2.0;
-    var lat_max = 40.713 + geo_range_lat/2.0;
-    var lon_min = -74.006 - geo_range_lon/2.0;
-    var lon_max = -74.006 + geo_range_lon/2.0;
-
-    var voxels_dim = 500;
-    var voxels_res_lat = geo_range_lat / voxels_dim;
-    var voxels_res_lon = geo_range_lon / voxels_dim;
-    var voxels_total = voxels_dim * voxels_dim;
-
     var map = L.map('map', {
         fullscreenControl: true,
     }).setView([40.713, -74.006], 13);
@@ -199,18 +187,7 @@
 
     var demand = [];
     $.getJSON( "json/demand.json", function( data ) {
-        console.log('Loaded demand');
         demand = data;
-
-        /*
-        for (var i = 200; i < 300; i++) {
-            for (var j = 200; j < 300; j++) {
-                var bounds = [[lat_min + i*voxels_res_lat, lon_min + j*voxels_res_lon], [lat_min + (i+1)*voxels_res_lat, lon_min + (j+1)*voxels_res_lon]];
-                L.rectangle(bounds, {stroke: false, fillOpacity: demand[i][j]/2000.0}).bindLabel("i="+i.toString()+", j="+j.toString()+", d="+demand[i][j].toString(), { noHide: true }).addTo(map);
-            }
-        }
-        */
-
     });
 
     var active_line = 'A';
@@ -221,49 +198,16 @@
         return '<div class="subway-line subway-clickable subway-gray subway-shuttle subway-shuttle-add" id="S-'+num.toString()+'"><div class="height_fix"></div><div class="content">+</div></div>'
     }
 
-    function subwayLineClickHandler(td) {
-        console.log(td);
-        if ($(td).hasClass('subway-selected')) {
-            $(td).removeClass('subway-selected');
-            active_line = 'None';
-            N_active_line = null;
-        } else {
-            $('.subway-clickable').removeClass('subway-selected');
-            $(td).addClass('subway-selected');
-            if ($(td).attr('id') == "subway-airtrain") {
-                // Special case for AirTrain.
-                active_line = "AIR";
-
-                N_active_line = find_line_by_name("AirTrain JFK", 1);
-
-
-            } else if ($(td).hasClass("subway-shuttle")) {
-                active_line = $(td).attr('id');
-                N_active_line = find_line_by_name($(td).attr('id'));
-                if ($(td).hasClass("subway-shuttle-add")) {
-                    $(td).children(".content").text("S");
-                    $(td).removeClass("subway-shuttle-add");
-                    number_of_shuttles += 1;
-                    if (number_of_shuttles < 5) {
-                        $(td).parent().append(newShuttleTemplate(number_of_shuttles+1));
-                    }
-                }
-            } else {
-                active_line = $(td).text();
-                N_active_line = find_line_by_name($(td).text(), 1);
-            }
-        }
-        regeneratePopups();
-	generateRouteDiagram();
-    }
+    
 
     $(document).on('click', '.subway-clickable', function() {
-        subwayLineClickHandler($(this));
+        line_select_click_handler($(this));
         return false;
     });
 
     $('#game-save').click(function() {
-        generateGameJSON();
+        //generateGameJSON();
+        save_game_json();
     });
 
      $('#game-load').click(function(e) {
@@ -275,245 +219,34 @@
 
     var next_station_id = 0;
 
-    function generateNearbyJSON() {
-        var json = [];
-
-        json.push(tract_nearby);
-
-        //console.log(json);
-
-        $("<a />", {
-            "download": "tract_nearby.json",
-            "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
-        }).appendTo("body")
-        .click(function() {
-            $(this).remove()
-        })[0].click()
-    }
-
-    function generateGameJSON() {
-        var json = [];
-        for (station_index in stations) {
-            var station = stations[station_index];
-            var station_json = {"name": station["name"], "info": station["info"], "latlng": [station["marker"].getLatLng().lat, station["marker"].getLatLng().lng], "lines": {}, "riders": station["riders"]};
-            for (line_index in station["lines"]) {
-                var line = station["lines"][line_index];
-                var line_pos = station_associations[line].indexOf(station);
-                station_json["lines"][line] = line_pos;
+    function generate_route_diagram(line) {
+        var line_stations = line.stations;
+        $('#route-diagram').empty();
+        for (var i = 0; i < line_stations.length; i++) {
+            var station = N_stations[line_stations[i]];
+            var station_entry = '<div class="route-diagram-entry"><div class="route-diagram-name">'+station.name+'</div><div class="route-diagram-transfers">';
+            for (var j = 0; j < station.lines.length; j++) {
+                if (N_lines[station.lines[j]].id != line.id)
+                    station_entry += '<div class="subway-line-mini '+N_lines[station.lines[j]].css+'"><div class="height_fix"></div><div class="content">'+N_lines[station.lines[j]].html+'</div></div>';
             }
-            json.push(station_json);
-        }
-        //console.log(json);
-        $("<a />", {
-            "download": "subway-game.json",
-            "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
-        }).appendTo("body")
-        .click(function() {
-            $(this).remove()
-        })[0].click()
-    }
-
-    function loadGameJSON(data) {
-        //$.getJSON( "subway-game.json", function( data ) {
-            initializeGameState();
-            console.log(data);
-            console.log(stations);
-            console.log(station_associations);
-            for (i in data) {
-                var station = data[i];
-                station["marker"] = createStationMarker(station["latlng"]);
-                var station_line_pos = station["lines"];
-                var station_lines = [];
-                for (line in station_line_pos) {
-                    station_lines.push(line);
-                }
-                station["lines"] = station_lines;
-                for (line in station_line_pos) {
-                    station_associations[line][station_line_pos[line]] = station;
-                }
-                station["marker"].on('click', function(s_e) {
-
-                    // Disable new station creation.
-                    map.off('click', handleMapClick);
-
-                    // Wait a second before you can create a new station.
-                    setTimeout(function() {
-                        map.on('click', handleMapClick);
-                    }, 1000);
-                });
-                station["marker"].bindPopup(station_popup);
-
-                stations.push(station);
-                var station_popup = generatePopup(stations.length, station["name"], station["info"], station_lines, station["riders"]);
-
-                station_popups.push(station_popup);
-
-            }
-
-
-            calculateSharedStretches();
-
-            for (line in station_associations) {
-
-                if (station_associations[line].length > 1) {
-                    drawCurves(line);
-                }
-            }
-            regeneratePopups();
-            generateRouteDiagram();
-            calculateTotalRidership();
-        //});
-    }
-
-    function sfix(line_name) {
-        if (line_name == "AIR") {
-            return "&#9992;";
-        } else if (line_name.match(/S-[0-9]*/)) {
-            return "S";
-        } else {
-            return line_name;
+            station_entry += '</div></div>';
+            $('#route-diagram').append(station_entry);
         }
     }
 
-    function generateRouteDiagram() {
-	var line_stations = station_associations[active_line];
-	$('#route-diagram').empty();
-	for (i = 0; i < line_stations.length; i++) {
-	    var station = line_stations[i];
-	    var station_entry = '<div class="route-diagram-entry"><div class="route-diagram-name">'+station['name']+'</div><div class="route-diagram-transfers">';
-	    for (j = 0; j < station['lines'].length; j++) {
-		if (station['lines'][j] != active_line) {
-		    station_entry += '<div class="subway-line-mini '+line_styles[station['lines'][j]]+'"><div class="height_fix"></div><div class="content">'+sfix(station['lines'][j])+'</div></div>';
-		}
-	    }
-	    station_entry += '</div></div>';
-	    $('#route-diagram').append(station_entry);
-	}
+    function regenerate_popups() {
+        
+        for (var i = 0; i < N_stations.length; i++) {
+            var station = N_stations[i];
+            if (station.active)
+                station.generate_popup();
+        }
+        
     }
 
-    function regeneratePopups() {
-        var i;
-        for (i = 0; i < N_stations.length; i++) {
-            var stationi = N_stations[i];
-            var popup = generatePopup(stationi.id, stationi.name, stationi.info, stationi.lines, stationi.riders);
-            stationi.marker.unbindPopup();
-            stationi.marker.bindPopup(popup);
-            station_popups[i] = popup;
+    $(document).on('click', '.station-delete', delete_station_event);
 
-        }
-    }
-
-    function deleteStation(e) {
-
-
-        var station_id = $(this).attr('id').replace('delete-', '');
-        var station = stations[station_id];
-
-        console.log('Delete station '+station_id);
-
-        var delete_classes = $(this).attr('class').split(' ');
-        var station_lines = [];
-        for (c in delete_classes) {
-            if (delete_classes[c].indexOf('line-') > -1) {
-                var line = delete_classes[c].replace('line-', '');
-                station_lines.push(line);
-            }
-        }
-        station_layer.removeLayer(station['marker']);
-
-        stations.splice(station_id,1);
-        station_popups.splice(station_id,1);
-
-        N_stations[station_id].delete();
-
-        generate_draw_map(N_stations[station_id].drawmaps);
-        for (var i = 0; i < N_stations[station_id].drawmaps.length; i++) {
-            var line_id = N_stations[station_id].drawmaps[i];
-            N_lines[line_id].draw();
-        }
-
-        regeneratePopups();
-
-
-        var lines_impacted = [];
-
-        for (line_index in station_lines) {
-            var line = station_lines[line_index];
-            var li = station_associations[line].indexOf(station);
-            if (li > -1) {
-                station_associations[line].splice(li, 1);
-                lines_impacted.push(line);
-            }
-        }
-
-        calculateSharedStretches();
-
-        for (l in station_lines) {
-            var line = station_lines[l];
-            //drawCurves(line);
-        }
-
-	generateRouteDiagram();
-	calculateTotalRidership();
-
-    }
-
-    function buildToStation(e) {
-
-
-        var station_id = $(this).attr('id').replace('build-', '');
-        var station = stations[station_id];
-
-
-        console.log('Build to station '+station_id);
-
-        var build_classes = $(this).attr('class').split(' ');
-        var station_lines = [];
-        for (c in build_classes) {
-            if (build_classes[c].indexOf('line-') > -1) {
-                var line = build_classes[c].replace('line-', '');
-                station_lines.push(line);
-            }
-        }
-
-
-
-
-        for (line_index in station_lines) {
-            var line = station_lines[line_index];
-
-            station['lines'].push(line);
-	    var insertion_point = findInsertionPoint(line, station);
-            station_associations[line].splice(insertion_point, 0, station);
-            $('div.subway-lines').append('<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+sfix(line)+'</div></div>');
-
-            var N_line = find_line_by_name(line);
-            N_line.insert_station(parseInt(station_id));
-
-
-        }
-
-        for (var i = 0; i < N_stations[station_id].drawmaps.length; i++) {
-            N_lines[N_stations[station_id].drawmaps[i]].draw();
-        }
-
-	station['lines'] = station['lines'].sort();
-        stations[station_id] = station;
-
-        calculateSharedStretches();
-
-        /*for (line_index in station_lines) {
-            drawCurves(line);
-        }*/
-        regeneratePopups();
-        generateRouteDiagram();
-    }
-
-
-
-    $(document).on('click', '.station-delete', deleteStation);
-
-    $(document).on('click', '.station-build', buildToStation);
+    $(document).on('click', '.station-build', build_to_station_event);
 
 
     $(document).on('click', '.station-name', function() {
@@ -526,100 +259,37 @@
             var newText = $(this).val();
             $(this).parent().text(newText).find('textarea').remove();
             var station_id = sn.attr('id').replace('station-', '');
-            var station = stations[station_id];
-            stations[station_id]['name'] = newText;
-            var popup = generatePopup(station_id, station['name'], station['info'], station['lines']);
-
-            stations[station_id]['marker'].unbindPopup();
-            stations[station_id]['marker'].bindPopup(popup);
-            station_popups[station_id] = popup;
-            generateRouteDiagram();
+            var station = N_stations[station_id];
+            station.name = newText;
+            station.generate_popup();
+            generate_route_diagram(N_active_line);
         });
     });
 
-    var popup = L.popup();
-    //var circle = L.circleMarker();
-
-    var geocodeService = L.esri.Geocoding.geocodeService();
-
-    function cleanAddress(addr) {
-        addr = addr.replace(/(\d*-?\d*)\s/g, " ").trim().replace(/^[NWES]\s/g, "");
-        addr = addr.replace("Plz", "Plaza");
-        addr = addr.trim();
-        return addr;
-    }
-
-    function cleanCity(city) {
-        city = city.replace(" Town of", "");
-        city = city.replace(" Twp", "");
-        city = city.trim();
-        return city;
-    }
-
-    function findInsertionPoint(active_line, station_obj) {
-	var line_insertion_pos = 0;
-        var line_insertion_best = -1;
-	var line_length = station_associations[active_line].length;
-	if (line_length > 0) {
-	/*for (var q = 0; q <= line_length; q++) {
-	    var total_distance = 0;
-	    if (q == 0) {
-	    	var test_st = station_associations[active_line][q]['marker'].getLatLng();
-            	total_distance = 0.9*Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
-	    } else if (q == line_length) {
-	        var test_st = station_associations[active_line][q-1]['marker'].getLatLng();
-		total_distance = 0.9*Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
-	    } else {
-	        var test_st = station_associations[active_line][q]['marker'].getLatLng();
-		var distance_prev = Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
-	        test_st = station_associations[active_line][q-1]['marker'].getLatLng();
-		var distance_next = Math.pow((Math.pow(latlng_orig.lat - test_st.lat, 2) + Math.pow(latlng_orig.lng - test_st.lng, 2)), 0.5);
-	        total_distance = Math.min(distance_prev, distance_next);
-	    }
-	    console.log(total_distance.toString() + " distance at pos "+q.toString());
-	    if (total_distance < line_insertion_best || line_insertion_best == -1) {
-		line_insertion_pos = q;
-		line_insertion_best = total_distance;
-	    }
-	}*/
-	var clone = station_associations[active_line].slice(0);
-	var line_insertion_best = -1;
-	var line_insertion_pos = 0;
-	for (var q = 0; q <= line_length; q++) {
-	    clone.splice(q, 0, station_obj);
-	    // Compute total distance
-	    var total_distance = 0;
-	    for (var r = 1; r <= line_length; r++) {
-	        var st_prev = clone[r-1]['marker'].getLatLng();
-	        var st_next = clone[r]['marker'].getLatLng();
-		total_distance += Math.pow((Math.pow(st_prev.lat - st_next.lat, 2) + Math.pow(st_prev.lng - st_next.lng, 2)), 0.5);
-	    }
-	    if (total_distance < line_insertion_best || line_insertion_best == -1) {
-		line_insertion_pos = q;
-		line_insertion_best = total_distance;
-	    }
-	    clone = station_associations[active_line].slice(0);
-	}
-	}
-	return line_insertion_pos;
-    }
-
-    var prev_coord = [L.latLng(0, 0), L.latLng(0,0)];
-
-    var stations = [];
-    var station_popups = [];
-    var station_associations = {};
-    var curves = {};
-    var shared_stretches = [];
     var number_of_shuttles = 0;
 
-    function initializeGameState() {
-        stations = [];
-        station_popups = [];
-        station_associations = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S-1': [], 'S-2': [], 'S-3': [], 'S-4': [], 'S-5': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'AIR': [], 'T': [], 'BQX': []};
-        curves = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'J': [], 'L': [], 'M': [], 'N': [], 'Q': [], 'R': [], 'S-1': [], 'S-2': [], 'S-3': [], 'S-4': [], 'S-5': [], 'Z': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], 'SI': [], 'AIR': [], 'T': [], 'BQX': []};
-        shared_stretches = [];
+    function initialize_game_state() {
+    
+        if (N_stations != null) {
+            // Reset the map
+            for (var i = 0; i < N_stations.length; i++) {
+                N_stations[i].delete();
+            }
+        }
+        
+        if (N_lines != null) {
+            for (var j = 0; j < N_lines.length; j++) {
+                N_lines[j].generate_draw_map();
+            }
+            for (j = 0; j < N_lines.length; j++) {
+                N_lines[j].draw();
+            }
+        }
+
         number_of_shuttles = 1;
+        
+        station_id_generator.reset();
+        line_id_generator.reset();
 
         N_stations = [];
         N_lines = [];
@@ -671,577 +341,28 @@
         N_line_groups.push(new LineGroup('AirTrains', [find_line_by_name('AirTrain JFK').id, find_line_by_name('AirTrain LGA').id]));
         N_line_groups.push(new LineGroup('T', [find_line_by_name('T').id]));
         N_line_groups.push(new LineGroup('BQX', [find_line_by_name('BQX').id]));
+        
+        
 
     }
 
-    initializeGameState();
-
-    var line_colors = {'A': '#0039A6', 'B': '#FF6319', 'C': '#0039A6', 'D': '#FF6319', 'E': '#0039A6', 'F': '#FF6319', 'G': '#6CBE45', 'J': '#996633', 'L': '#A7A9AC', 'M': '#FF6319', 'N': '#FCCC0A', 'Q': '#FCCC0A', 'R': '#FCCC0A', 'S-1': '#808183', 'S-2': '#808183', 'S-3': '#808183', 'S-4': '#808183', 'S-5': '#808183', 'Z': '#996633', '1': '#EE352E', '2': '#EE352E', '3': '#EE352E', '4': '#00933C', '5': '#00933C', '6': '#00933C', '7': '#B933AD', 'SI': '#0039A6', 'AIR': '#FFF200', 'T': '#1E9DBF', 'BQX': '#212121'};
-    var line_styles = {'A': 'subway-blue', 'B': 'subway-orange', 'C': 'subway-blue', 'D': 'subway-orange', 'E': 'subway-blue', 'F': 'subway-orange', 'G': 'subway-light-green', 'J': 'subway-brown', 'L': 'subway-silver', 'M': 'subway-orange', 'N': 'subway-yellow', 'Q': 'subway-yellow', 'R': 'subway-yellow', 'S-1': 'subway-gray', 'S-2': 'subway-gray', 'S-3': 'subway-gray', 'S-4': 'subway-gray', 'S-5': 'subway-gray', 'Z': 'subway-brown', '1': 'subway-red', '2': 'subway-red', '3': 'subway-red', '4': 'subway-green', '5': 'subway-green', '6': 'subway-green', '7': 'subway-purple', 'SI': 'subway-blue', 'AIR': 'subway-light-yellow', 'T': 'subway-turquoise', 'BQX': 'subway-black'};
+    initialize_game_state();
 
     function calculateTotalRidership() {
         var r = 0;
-        for (i in stations) {
-            r += stations[i]['riders'];
+        for (var i = 0; i < N_stations.length; i++) {
+            if (N_stations[i].active)
+                r += N_stations[i].riders;
         }
         $('#system-ridership').text(Math.round(r).toString());
 
-        var mc_cost = stations.length*1000000.0/r;
+        var mc_cost = N_stations.length*1000000.0/r;
         $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
     }
 
-    function generatePopup(station_id, station_name, station_info, lines, ridership) {
-        var station_popup = L.popup({'className': 'station-popup'});
-        var station_content = '<div class="station-name" id="station-'+station_id+'">'+station_name+'   <i class="fa fa-pencil" style="margin-left: 5px;" aria-hidden="true"></i></div>';
-        station_content += '<div class="station-content"><div class="station-info">'+station_info+'<br /><i class="fa fa-user" aria-hidden="true"></i> '+Math.round(ridership).toString()+'</div>';
-        station_content += '<div class="station-info subway-lines">';
-        for (i in lines) {
-            var line = lines[i];
-            station_content += '<div class="subway-line '+line_styles[line]+'"><div class="height_fix"></div><div class="content">'+sfix(line)+'</div></div>';
-        }
-        station_content += '</div>';
+    map.on('click', handle_map_click);
 
-
-        station_content += '<div class="station-content-button station-transfer" id="transfer-'+station_id+'">Transfer</div>';
-        for (line_index in line_styles) {
-            if (lines.indexOf(line_index) == -1 && line_index == active_line) {
-                station_content += '<div class="station-content-button station-build line-'+line_index+'" id="build-'+station_id+'">Build <div class="subway-line-mini '+line_styles[line_index]+'"><div class="height_fix"></div><div class="content">'+line_index+'</div></div></div>';
-            }
-        }
-        station_content += '<div class="station-content-button station-delete ';
-        for (i in lines) {
-            var line = lines[i];
-            station_content += 'line-'+line+' ';
-        }
-        station_content += '" id="delete-'+station_id+'">Delete</div>';
-        station_content += '</div>';
-        station_popup.setContent(station_content);
-        return station_popup;
-    }
-
-    map.on('click', handleMapClick);
-
-    function isIn2dArray(arr, i, j) {
-        for (var a = 0; a < arr.length; a++) {
-            var p = arr[a];
-            if (p.indexOf(i) > -1 && p.indexOf(j) > -1) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function calculateSharedStretches() {
-        shared_stretches = [];
-        var st_comparisons_made = [];
-
-        // Compare every station to every other station.
-        for (var i = 0; i < stations.length; i++) {
-            for (var j = 0; j < stations.length; j++) {
-
-                // We only care about:
-                // (a) station pairs where both are in more than 1 line, and
-                // (b) station pairs we haven't already considered
-                if ((stations[i].lines.length > 1) && (stations[j].lines.length > 1) && !isIn2dArray(st_comparisons_made, i, j)) {
-
-                    // Store this comparison
-                    st_comparisons_made.push([i,j]);
-
-                    // They must share at least two lines
-                    var common_lines = [];
-                    for (var k = 0; k < stations[i].lines.length; k++) {
-                        if (stations[j].lines.indexOf(stations[i].lines[k]) > -1) {
-                            common_lines.push(stations[i].lines[k]);
-                        }
-                    }
-
-                    var st_shared_stretch = [];
-                    var st_shared_used = [];
-
-                    if (common_lines.length > 1 && i != j) {
-                        //console.log("Stations ("+i.toString()+", "+j.toString()+") have common lines: ");
-                        //console.log(common_lines);
-                        var comparisons_made = [];
-
-                        // Compare the position in each common line
-                        for (var m = 0; m < common_lines.length; m++) {
-                            for (var n = 0; n < common_lines.length; n++) {
-                                var comparison = [m, n];
-                                if (!isIn2dArray(comparisons_made, m, n)) {
-                                    comparisons_made.push(comparison);
-
-                                    // Process line pair
-
-                                    st_i_m = station_associations[common_lines[m]].indexOf(stations[i]);
-                                    st_i_n = station_associations[common_lines[n]].indexOf(stations[i]);
-                                    st_j_m = station_associations[common_lines[m]].indexOf(stations[j]);
-                                    st_j_n = station_associations[common_lines[n]].indexOf(stations[j]);
-
-                                    // At least one side has to have a diff of 1.
-                                    diff_m = Math.abs(st_i_m - st_j_m);
-                                    diff_n = Math.abs(st_i_n - st_j_n);
-
-                                    // If one line has a diff of 1 and the other has a diff within the threshold...
-                                    if ((diff_m == 1 && diff_n <= SHARED_STRETCH_THRESHOLD) || (diff_n == 1 && diff_m <= SHARED_STRETCH_THRESHOLD)) {
-
-                                        // Add the appropriate pair.
-                                        if (st_shared_used.indexOf(m) == -1) {
-                                            st_shared_used.push(m);
-                                            st_shared_stretch.push({"line": common_lines[m], "start": Math.min(st_i_m, st_j_m), "end": Math.max(st_i_m, st_j_m)});
-                                        }
-                                        if (st_shared_used.indexOf(n) == -1) {
-                                            st_shared_used.push(n);
-                                            st_shared_stretch.push({"line": common_lines[n], "start": Math.min(st_i_n, st_j_n), "end": Math.max(st_i_n, st_j_n)});
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-
-                        if (st_shared_used.length > 0) {
-
-                            // Before pushing the stretch, check if it overlaps with any existing stretches.
-
-                            var add_this_stretch = true;
-                            var remove_these_stretches = [];
-
-                            for (var q = 0; q < shared_stretches.length; q++) {
-                                var st_view = shared_stretches[q];
-                                for (var r = 0; r < st_view.length; r++) {
-                                    var stretch_line = st_view[r].line;
-                                    for (var s = 0; s < st_shared_stretch.length; s++) {
-                                        if (stretch_line == st_shared_stretch[s].line) {
-                                            r_start = st_view[r].start;
-                                            r_end = st_view[r].end;
-                                            s_start = st_shared_stretch[s].start;
-                                            s_end = st_shared_stretch[s].end;
-
-                                            // If it's encompassed by a longer stretch on the same line, don't add it.
-                                            if (s_start >= r_start && s_end <= r_end) {
-                                                add_this_stretch = false;
-                                            }
-
-                                            // If it encompasses a shorter stretch on the same line, remove the shorter one.
-                                            if (s_start <= r_start && s_end >= r_end) {
-                                                remove_these_stretches.push(q);
-                                            }
-
-                                        }
-                                    }
-                                }
-                            }
-
-                            //console.log("Shared stretches length = "+shared_stretches.length.toString());
-                            if (remove_these_stretches.length > 0) {
-                                //console.log("Removing "+remove_these_stretches.length.toString()+" stretches");
-                                for (var t = remove_these_stretches.length - 1; t >= 0; t--) {
-                                    shared_stretches.splice(remove_these_stretches[t], 1);
-                                }
-                            }
-
-                            if (add_this_stretch) {
-                                //console.log("Adding a stretch");
-                                shared_stretches.push(st_shared_stretch);
-                            }
-                        }
-
-                    }
-                }
-
-            }
-        }
-    }
-
-    function printSharedStretch(st) {
-        console.log("Shared stretch: ");
-        for (var i = 0; i < st.length; i++) {
-            console.log("  "+st[i].line + " from "+st[i].start.toString()+"("+station_associations[st[i].line][st[i].start].name+") to "+st[i].end.toString()+"("+station_associations[st[i].line][st[i].end].name+")");
-        }
-    }
-
-    function drawCurves(line) {
-
-        for (var i = 0; i < curves[line].length; i++) {
-            curve = curves[line][i];
-
-            map.removeLayer(curve);
-        }
-        curves[line] = [];
-        var i;
-
-        var curve_options = {color: line_colors[line], weight: 8, fill: false, smoothFactor: 1.0, offset: 0};
-
-        var cp_lat = 0.0;
-        var cp_lng = 0.0;
-
-        var cp_set = false;
-
-        for (i = 1; i < station_associations[line].length; i++) {
-
-            console.log("Drawing line "+line+", station "+i.toString()+"("+station_associations[line][i].name+")");
-
-            var line_to_follow = line;  // The line we should follow.
-            var line_index_start = i-1; // The station number to start at.
-            var line_index_end = i;     // The station number to end at.
-
-            var line_overlap_count = 1;
-            var line_overlap_num = 0;
-
-            // Check if this station is involved in a Shared Stretch.
-            for (var k = 0; k < shared_stretches.length; k++) {
-                var ss = shared_stretches[k];
-                var longest_line = {};
-                var longest_line_length = 0;
-                var line_to_use = false;
-                var line_colors_in_shared_stretch = [];
-                for (var m = 0; m < ss.length; m++) {
-                    var ss_line = ss[m];
-                    var ss_line_length = Math.abs(ss_line.start - ss_line.end);
-
-                    if (ss_line_length > longest_line_length) {
-                        longest_line_length = ss_line_length;
-                        longest_line = ss_line;
-                    }
-                    var line_color = line_colors[ss_line.line];
-                    if (line_colors_in_shared_stretch.indexOf(line_color) == -1) {
-                        line_colors_in_shared_stretch.push(line_color);
-                    }
-
-                    if (ss_line.line == line && (ss_line.start <= i-1 && ss_line.end >= i)) {
-                        // This shared stretch is relevant.
-                        console.log("Drawing based on a shared stretch: "+k.toString());
-                        line_to_use = true;
-                    }
-                }
-
-                // If we found a line to use, follow the longest line.
-                if (line_to_use) {
-                    line_to_follow = longest_line.line;
-                    line_index_start = Math.min(longest_line.start, longest_line.end);
-                    line_index_end = Math.max(longest_line.start, longest_line.end);
-
-                    if (line_colors_in_shared_stretch.length > 1) {
-                        console.log("Multiple color stretch");
-                        line_overlap_count = line_colors_in_shared_stretch.length;
-                        line_overlap_num = line_colors_in_shared_stretch.indexOf(line_colors[line]);
-                    }
-
-                }
-
-            }
-
-            if (line_overlap_count > 1) {
-                var c = line_overlap_num - (line_overlap_count - 1)/2.0;
-                curve_options["offset"] = c*8.0;
-
-                /*
-                var delta_lat = st_end.lat - st_start.lat;
-                var delta_lng = st_end.lng - st_start.lng;
-                var theta = Math.atan(delta_lng / delta_lat);
-
-                var delta_offset_lat = Math.cos(theta) * 0.00005;
-                var delta_offset_lng = delta_offset_lat / Math.tan(theta);
-
-                st_start = L.latLng(st_start.lat + delta_offset_lat*c, st_start.lng + delta_offset_lng*c);
-                st_end = L.latLng(st_end.lat + delta_offset_lat*c, st_end.lng + delta_offset_lng*c);
-                */
-
-            } else {
-                curve_options["offset"] = 0.0;
-            }
-
-            for (var z = line_index_start; z < line_index_end; z++) {
-                var marker_start = station_associations[line_to_follow][z]['marker'];
-                var marker_end = station_associations[line_to_follow][z+1]['marker'];
-                var st_start = marker_start.getLatLng();
-                var st_end = marker_end.getLatLng();
-
-
-
-                if (z == 1 || (z > 0 && !cp_set)) {
-                    var st_dir = station_associations[line_to_follow][z-1]['marker'].getLatLng();
-                    cp_lat = st_dir.lat;
-                    cp_lng = st_dir.lng;
-                    cp_set = true;
-                }
-                if (z > 0) {
-
-                    var lat_os = (st_start.lat - cp_lat)*0.3;
-                    var lng_os = (st_start.lng - cp_lng)*0.3
-                    if (lat_os > CURVE_THRESHOLD) {
-                        lat_os = CURVE_THRESHOLD;
-                    }
-                    if (lat_os < -1.0*CURVE_THRESHOLD) {
-                        lat_os = -1.0*CURVE_THRESHOLD;
-                    }
-                    if (lng_os > CURVE_THRESHOLD) {
-                        lng_os = CURVE_THRESHOLD;
-                    }
-                    if (lng_os < -1.0*CURVE_THRESHOLD) {
-                        lng_os = -1.0*CURVE_THRESHOLD;
-                    }
-                    cp_lat = st_start.lat + lat_os;
-                    cp_lng = st_start.lng + lng_os;
-
-                    //curve = L.curve(['M', [st_start.lat, st_start.lng], 'Q', [cp_lat, cp_lng], [st_end.lat, st_end.lng]], curve_options);
-                    curve = L.polyline([st_start, st_end], curve_options);
-                } else {
-                    //curve = L.curve(['M', [st_start.lat, st_start.lng], 'L', [st_end.lat, st_end.lng]], curve_options);
-                    curve = L.polyline([st_start, st_end], curve_options);
-                }
-
-                curve_layer.addLayer(curve);
-                curves[line].push(curve);
-            }
-
-
-        }
-
-        station_layer.bringToFront();
-    }
-
-    function calculateRidership(latlng) {
-        /*
-        var turf_pt = {
-            "type": "Feature",
-            "properties": {},
-            "geometry": {
-                "type": "Point",
-                "coordinates": [latlng.lng, latlng.lat]
-            }
-        };
-        */
-        //var turf_circle = turf.buffer(turf_pt, 0.5, 'miles').features[0];
-
-        var tract_index = 0;
-        var total_ridership = 0;
-
-        var found_tract = false;
-
-        // New method: Voxels
-
-
-
-        var voxel_i = Math.round((latlng.lat - lat_min)/voxels_res_lat);
-        var voxel_j = Math.round((latlng.lng - lon_min)/voxels_res_lon);
-
-        console.log("Centered on i="+voxel_i+",j="+voxel_j);
-
-        total_ridership += demand[voxel_i][voxel_j+2];
-
-        total_ridership += demand[voxel_i+1][voxel_j+1];
-        total_ridership += demand[voxel_i][voxel_j+1];
-        total_ridership += demand[voxel_i-1][voxel_j+1];
-
-        total_ridership += demand[voxel_i+2][voxel_j];
-        total_ridership += demand[voxel_i+1][voxel_j];
-        total_ridership += demand[voxel_i][voxel_j];
-        total_ridership += demand[voxel_i-1][voxel_j];
-        total_ridership += demand[voxel_i-2][voxel_j];
-
-        total_ridership += demand[voxel_i+1][voxel_j-1];
-        total_ridership += demand[voxel_i][voxel_j-1];
-        total_ridership += demand[voxel_i-1][voxel_j-1];
-
-        total_ridership += demand[voxel_i][voxel_j-2];
-
-        // Old method: PIP + Neighbors
-
-        /*
-        var pip_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], tracts, true);
-        if (pip_layer.length > 0) {
-
-            //var layer = tracts_layers[tract_index];
-            var layer = pip_layer[0];
-            //console.log("Found matching tract: "+layer.feature.properties.C);
-            console.log(layer);
-            //found_tract = true;
-            var nearby_tracts = tract_nearby[tracts_layers.indexOf(layer)];
-            //console.log(nearby_tracts);
-            var tracts_used = 0;
-            var ct_used = [];
-            for (nearby_index = 0; nearby_index < nearby_tracts.length; nearby_index++) {
-                var nearby_layer = tracts_layers[nearby_tracts[nearby_index]];
-                var census_tract = nearby_index;
-                var ct2010 = nearby_layer.feature.properties.C;
-                //console.log("Checking tract "+ct2010+" at pos "+nearby_tracts[nearby_index]);
-                var overlap_polygon = turf.intersect(nearby_layer.feature, turf_circle);
-                if (ct_used.indexOf(ct2010) == -1) {
-                    if (overlap_polygon != undefined) {
-                        tracts_used += 1;
-                        //console.log(nearby_layer.feature.properties);
-                        var tract_population = populations[ct2010];
-                        if (tract_population == 0) {
-                            //console.log("Empty tract! "+census_tract);
-                        } else {
-                            //console.log("Tract "+census_tract+" has population "+tract_population);
-                        }
-                        //console.log("Tract id "+tract_index.toString());
-                        //console.log("Census tract "+nearby_layer.feature.properties.CT2010);
-                        //console.log("Population is "+tract_population);
-                        var overlap_area = turf.area(overlap_polygon);
-                        var tract_area = turf.area(nearby_layer.feature);
-                        var ridership = tract_population * overlap_area/tract_area;
-                        //console.log("Ridership is "+ridership);
-                        total_ridership += ridership;
-                    } else {
-                        //console.log("Undefined overlap polygon with "+ct2010);
-                    }
-                    ct_used.push(ct2010);
-                } else {
-                    //console.log("Already used "+ct2010);
-                    //console.log(nearby_layer.feature.properties);
-                }
-            }
-            console.log((100.0*tracts_used/nearby_tracts.length).toString() + "% neighbors used");
-        }
-        */
-
-        return total_ridership;
-    }
-
-    function createStationMarker(latlng_orig) {
-        var station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(6);
-        station_layer.addLayer(station);
-        return station;
-    }
-
-    function handleMapClick(e) {
-        console.log('map click');
-	var latlng = e.latlng;
-	var latlng_orig = e.latlng;
-
-        if (active_line != "None") {
-
-        geocodeService.reverse().distance(500).latlng(latlng).run(function(error, result) {
-            var station_name = '';
-            var station_info = '';
-            var geocode_success = true;
-            if (error) {
-                console.log(error);
-                geocode_success = false;
-            } else {
-                var geocoded_name = result.address.Address;
-                if (geocoded_name == null) {
-		    geocoded_name = "";
-		}
-		var city = result.address.City;
-                station_name = cleanAddress(geocoded_name);
-		//console.log(geocoded_name + " renamed to " + station_name);
-                if (city != "New York") {
-                    station_name = cleanCity(city) + ' - ' + station_name;
-                    station_info += cleanCity(city);
-                }
-                //latlng = result.latlng;
-            }
-
-            var enc_boroughs = [];
-            var enc_neighborhoods = [];
-            var enc_neighborhoods_always_label = ['Astoria'];
-            var enc_neighborhoods_only_label = ['Roosevelt Island', 'Governors Island', 'Randall\'s Island', 'North Brother Island', 'South Brother Island', 'Rikers Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
-            var enc_landmarks = [];
-	    var enc_landmarks_only_label = ['Ellis Island', 'Liberty Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];
-            var neighborhood_in_station_name = false;
-
-            var neighborhood_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], neighborhoods, true);
-            if (neighborhood_layer.length > 0) {
-                enc_boroughs.push(neighborhood_layer[0].feature.properties.borough);
-                enc_neighborhoods.push(neighborhood_layer[0].feature.properties.neighborhood);
-            }
-
-            if (enc_neighborhoods.length > 0) {
-                var enc_borough = enc_boroughs[0];
-                var enc_neighborhood = enc_neighborhoods[0];
-
-                if (enc_borough != "Manhattan" && station_name.match(/\d/g)) {
-                    station_name = enc_neighborhood + ' - ' + station_name;
-                    neighborhood_in_station_name = true;
-                }
-
-                for (en in enc_neighborhoods) {
-                    if ((enc_neighborhoods_always_label.indexOf(enc_neighborhoods[en]) != -1) && !neighborhood_in_station_name) {
-                        station_name = enc_neighborhoods[en] + ' - ' + station_name;
-                        neighborhood_in_station_name = true;
-                    }
-                    if ((enc_neighborhoods_only_label.indexOf(enc_neighborhoods[en]) != -1) && !neighborhood_in_station_name) {
-                        station_name = enc_neighborhoods[en];
-                        neighborhood_in_station_name = true;
-                    }
-                }
-
-                if (!geocode_success) {
-                    station_name = enc_neighborhood;
-                }
-                station_info += enc_borough;
-                station_info += '<br />';
-                station_info += enc_neighborhood;
-            }
-            var landmark_layer = leafletPip.pointInLayer([latlng.lng, latlng.lat], landmarks, true);
-            if (landmark_layer.length > 0) {
-                enc_landmarks.push(landmark_layer[0].feature.properties.name);
-            }
-            if (enc_landmarks.length > 0) {
-                station_name = station_name + ' - ' + enc_landmarks[0];
-		if (enc_landmarks_only_label.indexOf(enc_landmarks[0]) != -1) {
-		     station_name = enc_landmarks[0];
-		}
-            }
-
-
-            var ridership = calculateRidership(latlng_orig);
-            //console.log(ridership);
-
-            station = createStationMarker(latlng_orig);
-            var station_id = stations.length;
-
-            if (active_line != "None") {
-                station.on('click', function(s_e) {
-
-                    // Disable new station creation.
-                    map.off('click', handleMapClick);
-
-                    // Wait a second before you can create a new station.
-                    setTimeout(function() {
-                        map.on('click', handleMapClick);
-                    }, 1000);
-                });
-                //station.addTo(station_layer);
-
-
-                var station_obj = {"marker": station, "name": station_name, "info": station_info, "lines": [active_line], "riders": ridership};
-                stations.push(station_obj);
-		var line_insertion_pos = findInsertionPoint(active_line, station_obj);
-                station_associations[active_line].splice(line_insertion_pos, 0, station_obj);
-
-                var N_station = new Station(station, station_name, station_info, ridership);
-                N_stations[N_station.id] = N_station;
-                N_active_line.insert_station(N_station.id);
-
-
-
-                var station_popup = generatePopup(N_station.id, N_station.name, N_station.info, [active_line], ridership);
-
-
-                station_layer.bringToFront();
-                station_popups.push(station_popup);
-                station.bindPopup(station_popup).openPopup();
-            }
-
-            calculateSharedStretches();
-
-            if (active_line != "None") {
-                //drawCurves(active_line);
-                N_active_line.draw();
-            }
-
-	    generateRouteDiagram();
-	    calculateTotalRidership();
-
-        });
-
-        }
-    }
+    
 
     </script>
 </body>
