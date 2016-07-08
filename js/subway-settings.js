@@ -1,10 +1,14 @@
 // Drawing parameters
 var CURVE_THRESHOLD = 0.005; // Max overshoot from curve momentum.
 var MARKER_RADIUS_DEFAULT = 6.0;
-var MARKER_RADIUS_LARGE = 6.0;
-var STATION_MARKER_LARGE_THRESHOLD = 4; // Number of groups needed to force a large station marker
+var MARKER_RADIUS_LARGE = 8.0;
+var STATION_MARKER_LARGE_THRESHOLD = 3; // Number of groups needed to force a large station marker
 var TRACK_WIDTH = 6.0;
-var TRACK_OFFSET = 6.0;
+var TRACK_OFFSET = 5.0;
+var TRANSFER_WIDTH = 3.0;
+
+var USE_CURVED_TRACKS = true;
+var CURVE_OVERSHOOT = 0.5;
 
 // Map rendering parameters
 var SHARED_STRETCH_THRESHOLD = 8; // Max number of "local" stations in a shared stretch.
@@ -27,3 +31,7 @@ var VOXELS_TOTAL = VOXELS_DIM * VOXELS_DIM;
 var ENC_NEIGHBORHOODS_ALWAYS_LABEL = ['Astoria'];
 var ENC_NEIGHBORHOODS_ONLY_LABEL = ['Roosevelt Island', 'Governors Island', 'Randall\'s Island', 'North Brother Island', 'South Brother Island', 'Rikers Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
 var ENC_LANDMARKS_ONLY_LABEL = ['Ellis Island', 'Liberty Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];
+
+var TRANSFER_BUTTON_DEFAULT = "Start Transfer"
+var TRANSFER_BUTTON_START = "Click a station"
+var TRANSFER_BUTTON_END = "Click another station"

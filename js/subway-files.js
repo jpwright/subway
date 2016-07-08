@@ -27,11 +27,13 @@ function load_game_json(data) {
     for (var i = 0; i < data["stations"].length; i++) {
         var d = data["stations"][i];
         
-        var station = new Station(create_station_marker([d["lat"], d["lng"]]), d["name"], d["info"], d["riders"]);
+        var station = new Station(d["lat"], d["lng"], d["name"], d["info"], d["riders"]);
         station.lines = d["lines"];
-        station.drawmaps = d["drawmaps"];
-        station.active = d["active"];
+        //station.drawmaps = d["drawmaps"];
         N_stations[station.id] = station;
+        
+        if (!d["active"])
+            N_stations[station.id].delete();
         
         station.generate_popup();
     }
@@ -49,13 +51,20 @@ function load_game_json(data) {
     for (var k = 0; k < N_lines.length; k++) {
         N_lines[k].draw();
     }
+    
+    for (var q = 0; q < data["transfers"].length; q++) {
+        var d = data["transfers"][q];
+        var t = new Transfer(d["s"], d["e"]);
+        t.draw();
+        N_transfers.push(t);
+    }
 
     generate_route_diagram(N_active_line);
     calculateTotalRidership();
 }
 
 function save_game_json() {
-    var json = {"lines": [], "stations": []}
+    var json = {"lines": [], "stations": [], "transfers": []}
     
     for (var i = 0; i < N_lines.length; i++) {
         json["lines"].push(N_lines[i].to_json());
@@ -63,6 +72,10 @@ function save_game_json() {
     
     for (i = 0; i < N_stations.length; i++) {
         json["stations"].push(N_stations[i].to_json());
+    }
+    
+    for (i = 0; i < N_transfers.length; i++) {
+        json["transfers"].push(N_transfers[i].to_json());
     }
 
     $("<a />", {

@@ -1,10 +1,26 @@
-function create_station_marker(latlng_orig) {
+function create_station_marker(id, latlng_orig) {
     var station = L.circleMarker(latlng_orig, {color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0}).setRadius(MARKER_RADIUS_DEFAULT);
     
     station.on('click', function(s_e) {
 
         // Disable new station creation.
         map.off('click', handle_map_click);
+        
+        if (transfer_state == 1) {
+            
+            transfer_end = id;
+            transfer_state = 0;
+            
+            var different_stations = transfer_origin != transfer_end;
+            var stations_exist = (N_stations[transfer_origin].active && N_stations[transfer_end]);
+            if (different_stations && stations_exist) {
+                var transfer = new Transfer(transfer_origin, transfer_end);
+                transfer.draw();
+                N_transfers.push(transfer);
+            }
+            generate_route_diagram(N_active_line);
+            
+        }
 
         // Wait a second before you can create a new station.
         setTimeout(function() {
@@ -36,8 +52,9 @@ function delete_station_event(e) {
     
     N_stations[station_id].delete();
 
-    for (var i = 0; i < N_stations[station_id].drawmaps.length; i++) {
-        var line_id = N_stations[station_id].drawmaps[i];
+    var drawmaps = N_stations[station_id].drawmaps()
+    for (var i = 0; i < drawmaps.length; i++) {
+        var line_id = drawmaps[i];
         N_lines[line_id].generate_draw_map();
         N_lines[line_id].draw();
     }
@@ -62,7 +79,7 @@ function build_to_station_event(e) {
         }
     }
     
-    var impacted_lines = N_stations[station_id].drawmaps;
+    var impacted_lines = N_stations[station_id].drawmaps();
 
     for (var i = 0; i < station_lines.length; i++) {
         var line_id = station_lines[i];
@@ -77,8 +94,8 @@ function build_to_station_event(e) {
         
         // Add drawmaps of nearby stations
         for (var j = start_index; j < end_index; j++) {
-            for (var k = 0; k < N_stations[line.stations[j]].drawmaps.length; k++) {
-                var drawmaps = N_stations[line.stations[j]].drawmaps;
+            var drawmaps = N_stations[line.stations[j]].drawmaps();
+            for (var k = 0; k < drawmaps.length; k++) {
                 if (!is_in_array(drawmaps[k], impacted_lines))
                     impacted_lines.push(drawmaps[k]);
             }
@@ -95,6 +112,18 @@ function build_to_station_event(e) {
 
     regenerate_popups();
     generate_route_diagram(N_active_line);
+}
+
+function transfer_station_event(e) {
+
+    var station_id = $(this).attr('id').replace('transfer-', '');
+    var station = N_stations[station_id];
+    
+    if (transfer_state == 0) {
+        transfer_origin = station_id;
+        transfer_state = 1;
+    }
+
 }
 
 function line_select_click_handler(td) {

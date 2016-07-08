@@ -1,14 +1,16 @@
 class Station {
-    constructor(marker, name, info, riders) {
-        this.marker = marker;
+    constructor(lat, lng, name, info, riders) {
         this.name = name;
         this.info = info;
         this.riders = riders;
 
         this.lines = []; // Lines that contain this station.
-        this.drawmaps = []; // Lines that contain this station within its draw map.
+        //this.drawmaps = []; // Lines that contain this station within its draw map.
 
         this.id = station_id_generator.generate();
+        
+        this.marker = create_station_marker(this.id, [lat, lng]);
+        
         this.active = true;
     }
     
@@ -20,7 +22,7 @@ class Station {
             "info": this.info,
             "riders": this.riders,
             "lines": this.lines,
-            "drawmaps": this.drawmaps,
+            //"drawmaps": this.drawmaps,
             "id": this.id,
             "active": this.active
         };
@@ -63,6 +65,15 @@ class Station {
         
         return station_popup;
     }
+    
+    drawmaps() {
+        var drawmaps = [];
+        for (var i = 0; i < N_lines.length; i++) {
+            if (is_in_array(this.id, N_lines[i].draw_map))
+                drawmaps.push(N_lines[i].id);
+        }
+        return drawmaps;
+    }
 
     delete() {
         
@@ -93,6 +104,10 @@ class Station {
             }
 
         }
+        
+        for (var j = 0; j < impacted_lines.length; j++) {
+            N_lines[impacted_lines[j]].draw();
+        }
 
     }
 }
@@ -100,9 +115,8 @@ class Station {
 function geocode_to_station(geo, line) {
     
     var ridership = calculate_ridership(geo.latlng);
-    var marker = create_station_marker(geo.latlng);
-        
-    var N_station = new Station(marker, geo.name, geo.info, ridership);
+    
+    var N_station = new Station(geo.latlng.lat, geo.latlng.lng, geo.name, geo.info, ridership);
     N_stations[N_station.id] = N_station;
     var new_index = N_active_line.insert_station(N_station.id);
 
@@ -114,8 +128,8 @@ function geocode_to_station(geo, line) {
     var start_index = Math.max(0, new_index - SHARED_STRETCH_THRESHOLD);
     var end_index = Math.min(new_index + SHARED_STRETCH_THRESHOLD, N_active_line.stations.length);
     for (var j = start_index; j < end_index; j++) {
-        for (var k = 0; k < N_stations[N_active_line.stations[j]].drawmaps.length; k++) {
-            var drawmaps = N_stations[N_active_line.stations[j]].drawmaps;
+        for (var k = 0; k < N_stations[N_active_line.stations[j]].drawmaps().length; k++) {
+            var drawmaps = N_stations[N_active_line.stations[j]].drawmaps();
             if (!is_in_array(drawmaps[k], impacted_lines))
                 impacted_lines.push(drawmaps[k]);
         }

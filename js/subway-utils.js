@@ -50,8 +50,45 @@ function find_stations_by_name(station_name) {
     var stations = [];
     for (var i = 0; i < N_stations.length; i++) {
         if (N_stations[i].name == station_name && N_stations[i].active) {
-            stations.push(i);
+            stations.push(N_stations[i]);
         }
     }
     return stations;
+}
+
+function debug_voxels() {
+    
+    for (var lat = LAT_MIN; lat < LAT_MAX; lat += VOXELS_RES_LAT) {
+        for (var lng = LNG_MIN; lng < LNG_MAX; lng += VOXELS_RES_LNG) {
+            var voxel_i = Math.round((lat - LAT_MIN)/VOXELS_RES_LAT);
+            var voxel_j = Math.round((lng - LNG_MIN)/VOXELS_RES_LNG);
+            
+            console.log("Adding voxel at "+voxel_i.toString()+","+voxel_j.toString());
+            var voxel = L.rectangle([[lat, lng], [lat+VOXELS_RES_LAT, lng+VOXELS_RES_LNG]], {color: "#ff7800", weight: 0, fillOpacity: demand[voxel_i][voxel_j]/1000.0});
+            voxel.addTo(map);
+            
+        }
+    }
+}
+
+function redraw_all_lines() {
+    for (var i = 0; i < N_lines.length; i++) {
+        N_lines[i].draw();
+    }
+}
+
+function average_control_points(control_points_to_average) {
+
+    // Takes in a 3d array of pairs of control points (each control point being an x,y pair)
+    var num_sets = control_points_to_average.length;
+    var cp_average = [[0.0,0.0],[0.0,0.0]];
+    for (var i = 0; i < num_sets; i++) {
+        for (var j = 0; j < 2; j++) {
+            for (var k = 0; k < 2; k++) {
+                cp_average[j][k] += (control_points_to_average[i][j][k] * 1.0) / (num_sets * 1.0);
+            }
+        }
+    }
+    return cp_average;
+    
 }

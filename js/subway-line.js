@@ -9,6 +9,7 @@ class Line {
         this.stations = [];
         this.draw_map = [];
         this.tracks = [];
+        this.control_points = [];
 
         this.id = line_id_generator.generate();
     }
@@ -77,10 +78,6 @@ class Line {
         if (!is_in_array(this.id, N_stations[station_id].lines))
             N_stations[station_id].lines.push(this.id);
 
-        // Add this line to the station's array of drawmaps.
-        if (!is_in_array(this.id, N_stations[station_id].drawmaps))
-            N_stations[station_id].drawmaps.push(this.id);
-
         // Generate impacted draw maps.
         for (var i = 0; i < N_stations[station_id].lines.length; i++) {
             //N_lines[N_stations[station_id].lines[i]].generate_draw_map();
@@ -99,6 +96,7 @@ class Line {
         // Iterate through all stations on this line.
         for (var i = 0; i < this.stations.length - 1; i++) {
 
+            var shared_stretch_found = false;
             
             if (!is_in_array(this.stations[i], this.draw_map))
                 this.draw_map.splice(draw_map_index, 0, this.stations[i]);
@@ -108,6 +106,7 @@ class Line {
 
             var station_id = this.stations[i];
             var station = N_stations[station_id];
+                
 
             // Only care if the station is on at least 2 lines.
             if (station.lines.length > 1) {
@@ -138,20 +137,25 @@ class Line {
                                 var station_is_close_enough_on_impacted_line = Math.abs(i - this.stations.indexOf(relevant_line.stations[k])) <= SHARED_STRETCH_THRESHOLD;
                                 var different_stations = relevant_line.stations[k] != station_id;
                                 var more_stations_on_relevant_line = Math.abs(k - start_index) > (this.stations.indexOf(relevant_line.stations[k]) - i);
-                                var is_next_station_on_line = is_in_array(relevant_line.stations[k], [this.stations[i + dir], this.stations[i - dir]]);
+                                var is_next_station_on_line = relevant_line.stations[k] == this.stations[i + 1];
                                 
                                 if (station_is_shared_between_lines && station_is_close_enough_on_impacted_line && different_stations && more_stations_on_relevant_line && is_next_station_on_line) {
                                     
                                     // Shared stretch found!
                                     // Add all the stations to the drawmap, if not yet present.
+                                    // Only allow this to happen once per station, to avoid Canal St N/Q/R bug...
+                                    var draw_map_added = 0;
                                     
-                                    for (var m = 0; m < station_buffer.length; m++) {
-                                        if (!is_in_array(station_buffer[m], this.draw_map)) {
-                                            this.draw_map.splice(draw_map_index, 0, station_buffer[m]);
-                                            draw_map_index += 1;
+                                    if (!shared_stretch_found) {
+                                        for (var m = 0; m < station_buffer.length; m++) {
+                                            if (!is_in_array(station_buffer[m], this.draw_map)) {
+                                                this.draw_map.splice(draw_map_index, 0, station_buffer[m]);
+                                                draw_map_index += 1;
+                                                draw_map_added += 1;
+                                            }
                                         }
-                                        if (!is_in_array(this.id, N_stations[station_buffer[m]].drawmaps))
-                                            N_stations[station_buffer[m]].drawmaps.push(this.id);
+                                        if (draw_map_added > 0)
+                                            shared_stretch_found = true;
                                     }
 
                                 }
@@ -183,45 +187,177 @@ class Line {
         var cp_lng = 0.0;
         var cp_set = false;
 
-        for (i = 1; i < this.draw_map.length; i++) {
-
-            var station_prev = N_stations[this.draw_map[i-1]];
-            var station_next = N_stations[this.draw_map[i]];
-
-            // Get the number of colors in the tracks between these stations.
-            var common_tracks = sort_by_group(intersect(station_prev.drawmaps, station_next.drawmaps));
-            var unique_groups = lines_to_groups(common_tracks).sort();
-
-            var first_line = N_lines[common_tracks[0]];
-            var parity = first_line.draw_map.indexOf(this.draw_map[i]) > first_line.draw_map.indexOf(this.draw_map[i-1]);
-
-            var unique_group_index = 0;
+        if (USE_CURVED_TRACKS) {
             
-            // Get index of this line within the unique groups.
-            for (var j = 0; j < unique_groups.length; j++) {
-                if (is_in_array(this.id, N_line_groups[unique_groups[j]].lines))
-                    unique_group_index = j;
-            }
+            if (this.draw_map.length > 1) {
+                var coordinates = []
+                for (i = 0; i < this.draw_map.length; i++) {
+                    coordinates.push({"x": N_stations[this.draw_map[i]].marker.getLatLng().lng, "y": N_stations[this.draw_map[i]].marker.getLatLng().lat});
+                }
+                
+                var turf_line = {
+                    "type": "Feature",
+                    "properties": {
+                        "stroke": "#f00"
+                    },
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": coordinates
+                    }
+                };
+                
+                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: 0.75});
+                
+                for (i = 1; i < this.draw_map.length; i++) {
+                    
+                    var bezier_options = ['M', [N_stations[this.draw_map[i-1]].marker.getLatLng().lat, N_stations[this.draw_map[i-1]].marker.getLatLng().lng]];
+                    bezier_options.push('C');
+                    
+                    this.control_points[i-1] = [[spline.controls[i-1][1].y, spline.controls[i-1][1].x], [spline.controls[i][0].y, spline.controls[i][0].x]];
+                    
+                    var station_prev = N_stations[this.draw_map[i-1]];
+                    var station_next = N_stations[this.draw_map[i]];
+                    var station_drawmaps = station_prev.drawmaps();
+                    
+                    
+                    if (station_drawmaps.length == 1) {
+                        // No other lines impact this station. 
+                        bezier_options.push(this.control_points[i-1][0]);
+                        bezier_options.push(this.control_points[i-1][1]);
+                    } else {
+                        // Iterate through this other station's drawmaps.
+                        var control_points_to_average = [[this.control_points[i-1][0], this.control_points[i-1][1]]];
+                        
+                        var station_ids_to_check = [N_stations[this.draw_map[i]].id];
+                        
+                        
+                        for (var j = 0; j < station_drawmaps.length; j++) {
+                            // Only consider different lines.
+                            if (station_drawmaps[j] != this.id) {
+                                var station_position_in_line = N_lines[station_drawmaps[j]].draw_map.indexOf(station_prev.id);
+                                
+                                // If there's a "next" station to check...
+                                if (station_position_in_line + 1 < N_lines[station_drawmaps[j]].draw_map.length) {
+                                    if (is_in_array(N_lines[station_drawmaps[j]].draw_map[station_position_in_line + 1], station_ids_to_check)) {
+                                        var cp_to_push = N_lines[station_drawmaps[j]].control_points[station_position_in_line];
+                                        if (cp_to_push != null)
+                                            control_points_to_average.push(cp_to_push);
+                                    }
+                                }
+                                
+                                // If there's a "previous" station to check...
+                                if (station_position_in_line - 1 >= 0) {
+                                    if (is_in_array(N_lines[station_drawmaps[j]].draw_map[station_position_in_line - 1], station_ids_to_check)) {
+                                        var cp_to_push = N_lines[station_drawmaps[j]].control_points[station_position_in_line - 1];
+                                        if (cp_to_push != null)
+                                            control_points_to_average.push(cp_to_push);
+                                    }
+                                }
+                                
+                            }
+                        }
+                        
+                        // Average the control points and push them
+                        if (control_points_to_average.length > 1) {
+                            var cp_average = average_control_points(control_points_to_average);
+                            bezier_options.push(cp_average[0]);
+                            bezier_options.push(cp_average[1]);
+                        } else {
+                            bezier_options.push(this.control_points[i-1][0]);
+                            bezier_options.push(this.control_points[i-1][1]);
+                        }
+                    }
+                    
+                    
+                    // For testing control points
+                    //L.circle([spline.controls[i-1][1].y, spline.controls[i-1][1].x], 10).addTo(map);
+                    //L.circle([spline.controls[i][0].y, spline.controls[i][0].x], 10).addTo(map);
+                    
+                    bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
+                    
+                    // Get the number of colors in the tracks between these stations.
+                    var common_tracks = sort_by_group(intersect(station_prev.drawmaps(), station_next.drawmaps()));
+                    var unique_groups = lines_to_groups(common_tracks).sort();
 
-            // Offset the line accordingly.
-            if (unique_groups.length > 1) {
-                var c = unique_group_index - (unique_groups.length - 1)/2.0;
-                if (parity)
-                    curve_options["offset"] = c*TRACK_OFFSET;
-                else
-                    curve_options["offset"] = c*-1*TRACK_OFFSET;
-            } else {
-                curve_options["offset"] = 0.0;
+                    var first_line = N_lines[common_tracks[0]];
+                    var parity = first_line.draw_map.indexOf(this.draw_map[i]) > first_line.draw_map.indexOf(this.draw_map[i-1]);
+
+                    var unique_group_index = 0;
+                    
+                    // Get index of this line within the unique groups.
+                    for (var j = 0; j < unique_groups.length; j++) {
+                        if (is_in_array(this.id, N_line_groups[unique_groups[j]].lines))
+                            unique_group_index = j;
+                    }
+
+                    // Offset the line accordingly.
+                    if (unique_groups.length > 1) {
+                        var c = unique_group_index - (unique_groups.length - 1)/2.0;
+                        if (parity)
+                            curve_options["offset"] = c*TRACK_OFFSET;
+                        else
+                            curve_options["offset"] = c*-1*TRACK_OFFSET;
+                    } else {
+                        curve_options["offset"] = 0.0;
+                    }
+                    
+                    // Set the marker size based on number of tracks.
+                    if (lines_to_groups(station_prev.drawmaps()).length >= STATION_MARKER_LARGE_THRESHOLD || station_prev.lines.length > 8) {
+                        station_prev.marker.setRadius(MARKER_RADIUS_LARGE);
+                    }
+                
+                    var track = L.curve(bezier_options, curve_options);
+                    
+                    //var track = L.polyline(latlngs, curve_options);
+                    curve_layer.addLayer(track);
+                    this.tracks.push(track);
+                }
             }
             
-            // Set the marker size based on number of tracks.
-            if (lines_to_groups(station_prev.drawmaps).length >= STATION_MARKER_LARGE_THRESHOLD || station_prev.lines.length > 6) {
-                station_prev.marker.setRadius(MARKER_RADIUS_LARGE);
-            }
+        } else {
             
-            var track = L.polyline([station_prev.marker.getLatLng(), station_next.marker.getLatLng()], curve_options);
-            curve_layer.addLayer(track);
-            this.tracks.push(track);
+            for (i = 1; i < this.draw_map.length; i++) {
+
+                var station_prev = N_stations[this.draw_map[i-1]];
+                var station_next = N_stations[this.draw_map[i]];
+
+                // Get the number of colors in the tracks between these stations.
+                var common_tracks = sort_by_group(intersect(station_prev.drawmaps(), station_next.drawmaps()));
+                var unique_groups = lines_to_groups(common_tracks).sort();
+
+                var first_line = N_lines[common_tracks[0]];
+                var parity = first_line.draw_map.indexOf(this.draw_map[i]) > first_line.draw_map.indexOf(this.draw_map[i-1]);
+
+                var unique_group_index = 0;
+                
+                // Get index of this line within the unique groups.
+                for (var j = 0; j < unique_groups.length; j++) {
+                    if (is_in_array(this.id, N_line_groups[unique_groups[j]].lines))
+                        unique_group_index = j;
+                }
+
+                // Offset the line accordingly.
+                if (unique_groups.length > 1) {
+                    var c = unique_group_index - (unique_groups.length - 1)/2.0;
+                    if (parity)
+                        curve_options["offset"] = c*TRACK_OFFSET;
+                    else
+                        curve_options["offset"] = c*-1*TRACK_OFFSET;
+                } else {
+                    curve_options["offset"] = 0.0;
+                }
+                
+                // Set the marker size based on number of tracks.
+                if (lines_to_groups(station_prev.drawmaps()).length >= STATION_MARKER_LARGE_THRESHOLD || station_prev.lines.length > 8) {
+                    station_prev.marker.setRadius(MARKER_RADIUS_LARGE);
+                }
+                
+                var track = L.polyline([station_prev.marker.getLatLng(), station_next.marker.getLatLng()], curve_options);
+
+                curve_layer.addLayer(track);
+                this.tracks.push(track);
+                
+            }
         }
 
         station_layer.bringToFront();
@@ -355,8 +491,6 @@ function generate_draw_map(impacted_lines) {
                                         impacted_line.draw_map.splice(draw_map_index, 0, station_buffer[m]);
                                         draw_map_index += 1;
                                     }
-                                    if (!is_in_array(impacted_line_id, N_stations[station_buffer[m]].drawmaps))
-                                        N_stations[station_buffer[m]].drawmaps.push(impacted_line_id);
                                 }
 
                             }
