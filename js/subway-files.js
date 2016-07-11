@@ -47,6 +47,7 @@ function load_game_json(data) {
     
     for (var k = 0; k < N_lines.length; k++) {
         N_lines[k].generate_draw_map();
+        N_lines[k].generate_control_points();
     }
     for (var k = 0; k < N_lines.length; k++) {
         N_lines[k].draw();

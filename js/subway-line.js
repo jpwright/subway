@@ -170,8 +170,38 @@ class Line {
         }
         
     }
+    
+    generate_control_points () {
+        if (USE_CURVED_TRACKS) {
+            if (this.draw_map.length > 1) {
+                var coordinates = []
+                for (var i = 0; i < this.draw_map.length; i++) {
+                    coordinates.push({"x": N_stations[this.draw_map[i]].marker.getLatLng().lng, "y": N_stations[this.draw_map[i]].marker.getLatLng().lat});
+                }
+                
+                var turf_line = {
+                    "type": "Feature",
+                    "properties": {
+                        "stroke": "#f00"
+                    },
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": coordinates
+                    }
+                };
+                
+                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
+                
+                for (i = 1; i < this.draw_map.length; i++) {
+                    var bezier_options = ['M', [N_stations[this.draw_map[i-1]].marker.getLatLng().lat, N_stations[this.draw_map[i-1]].marker.getLatLng().lng]];
+                    this.control_points[i-1] = [[spline.controls[i-1][1].y, spline.controls[i-1][1].x], [spline.controls[i][0].y, spline.controls[i][0].x]];
+                }
+            }
+        }
+    }
 
     draw() {
+        console.log("Drawing line "+this.name);
         // Remove existing tracks.
         for (var i = 0; i < this.tracks.length; i++) {
             var track = this.tracks[i];
@@ -206,12 +236,11 @@ class Line {
                     }
                 };
                 
-                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: 0.75});
+                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
                 
                 for (i = 1; i < this.draw_map.length; i++) {
                     
                     var bezier_options = ['M', [N_stations[this.draw_map[i-1]].marker.getLatLng().lat, N_stations[this.draw_map[i-1]].marker.getLatLng().lng]];
-                    bezier_options.push('C');
                     
                     this.control_points[i-1] = [[spline.controls[i-1][1].y, spline.controls[i-1][1].x], [spline.controls[i][0].y, spline.controls[i][0].x]];
                     
@@ -219,11 +248,30 @@ class Line {
                     var station_next = N_stations[this.draw_map[i]];
                     var station_drawmaps = station_prev.drawmaps();
                     
+                    // Get the number of colors in the tracks between these stations.
+                    var common_tracks = sort_by_group(intersect(station_drawmaps, station_next.drawmaps()));
+                    var unique_groups = lines_to_groups(common_tracks).sort();
+
+                    var first_line = N_lines[common_tracks[0]];
+                    var parity = first_line.draw_map.indexOf(this.draw_map[i]) > first_line.draw_map.indexOf(this.draw_map[i-1]);
+
+                    var unique_group_index = 0;
+                    
+                    // Get index of this line within the unique groups.
+                    for (var j = 0; j < unique_groups.length; j++) {
+                        if (is_in_array(this.id, N_line_groups[unique_groups[j]].lines))
+                            unique_group_index = j;
+                    }
+                    
+                    var c = unique_group_index - (unique_groups.length - 1)/2.0;
+                    
                     
                     if (station_drawmaps.length == 1) {
                         // No other lines impact this station. 
+                        bezier_options.push('C');
                         bezier_options.push(this.control_points[i-1][0]);
                         bezier_options.push(this.control_points[i-1][1]);
+                        bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
                     } else {
                         // Iterate through this other station's drawmaps.
                         var control_points_to_average = [[this.control_points[i-1][0], this.control_points[i-1][1]]];
@@ -250,22 +298,32 @@ class Line {
                                     if (is_in_array(N_lines[station_drawmaps[j]].draw_map[station_position_in_line - 1], station_ids_to_check)) {
                                         var cp_to_push = N_lines[station_drawmaps[j]].control_points[station_position_in_line - 1];
                                         if (cp_to_push != null)
-                                            control_points_to_average.push(cp_to_push);
+                                            control_points_to_average.push(cp_to_push.reverse());
                                     }
                                 }
                                 
                             }
                         }
+                        var control_point_1;
+                        var control_point_2;
                         
                         // Average the control points and push them
                         if (control_points_to_average.length > 1) {
                             var cp_average = average_control_points(control_points_to_average);
-                            bezier_options.push(cp_average[0]);
-                            bezier_options.push(cp_average[1]);
+                            control_point_1 = cp_average[0];
+                            control_point_2 = cp_average[1];
                         } else {
-                            bezier_options.push(this.control_points[i-1][0]);
-                            bezier_options.push(this.control_points[i-1][1]);
+                            control_point_1 = this.control_points[i-1][0];
+                            control_point_2 = this.control_points[i-1][1];
                         }
+                        
+                        bezier_options.push('C');
+                        
+                
+                        bezier_options.push(control_point_1);
+                        bezier_options.push(control_point_2);
+                        bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
+
                     }
                     
                     
@@ -273,33 +331,20 @@ class Line {
                     //L.circle([spline.controls[i-1][1].y, spline.controls[i-1][1].x], 10).addTo(map);
                     //L.circle([spline.controls[i][0].y, spline.controls[i][0].x], 10).addTo(map);
                     
-                    bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
-                    
-                    // Get the number of colors in the tracks between these stations.
-                    var common_tracks = sort_by_group(intersect(station_prev.drawmaps(), station_next.drawmaps()));
-                    var unique_groups = lines_to_groups(common_tracks).sort();
-
-                    var first_line = N_lines[common_tracks[0]];
-                    var parity = first_line.draw_map.indexOf(this.draw_map[i]) > first_line.draw_map.indexOf(this.draw_map[i-1]);
-
-                    var unique_group_index = 0;
-                    
-                    // Get index of this line within the unique groups.
-                    for (var j = 0; j < unique_groups.length; j++) {
-                        if (is_in_array(this.id, N_line_groups[unique_groups[j]].lines))
-                            unique_group_index = j;
-                    }
 
                     // Offset the line accordingly.
+                    
                     if (unique_groups.length > 1) {
                         var c = unique_group_index - (unique_groups.length - 1)/2.0;
                         if (parity)
+                        //if (false)
                             curve_options["offset"] = c*TRACK_OFFSET;
                         else
                             curve_options["offset"] = c*-1*TRACK_OFFSET;
                     } else {
                         curve_options["offset"] = 0.0;
                     }
+                    
                     
                     // Set the marker size based on number of tracks.
                     if (lines_to_groups(station_prev.drawmaps()).length >= STATION_MARKER_LARGE_THRESHOLD || station_prev.lines.length > 8) {

@@ -69,17 +69,17 @@ function build_to_station_event(e) {
 
 
     var station_id = $(this).attr('id').replace('build-', '');
-
+    var impacted_lines = N_stations[station_id].drawmaps();
+    
     var build_classes = $(this).attr('class').split(' ');
     var station_lines = [];
     for (c in build_classes) {
         if (build_classes[c].indexOf('line-') > -1) {
             var line = build_classes[c].replace('line-', '');
             station_lines.push(line);
+            impacted_lines.push(line);
         }
     }
-    
-    var impacted_lines = N_stations[station_id].drawmaps();
 
     for (var i = 0; i < station_lines.length; i++) {
         var line_id = station_lines[i];

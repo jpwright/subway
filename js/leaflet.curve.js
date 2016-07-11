@@ -338,9 +338,19 @@ L.Curve = L.Path.extend({
         },
 
 	_project: function() {
-		var coord, lastCoord, curCommand, curPoint;
+		var coord, lastCoord, curCommand, curPoint, prevPoint;
 
 		this._points = [];
+                
+                // Hack added by Jason for offsetting
+                var first_actual_coord = this._coords[1];
+                var last_actual_coord = this._coords[this._coords.length - 1];
+                var start_point = this._map.latLngToLayerPoint([first_actual_coord[0], first_actual_coord[1]]);
+                var end_point = this._map.latLngToLayerPoint([last_actual_coord[0], last_actual_coord[1]]);
+                var angle = Math.atan2(end_point.x - start_point.x, end_point.y - start_point.y);
+                angle = angle + (Math.PI / 2.0);
+                var x_offset = Math.sin(angle) * this.options.offset;
+                var y_offset = Math.cos(angle) * this.options.offset;
 		
 		for(var i = 0; i < this._coords.length; i++){
 			coord = this._coords[i];
@@ -363,7 +373,9 @@ L.Curve = L.Path.extend({
 						}
 					break;
 				}
-				this._points.push(L.point([curPoint.x+this.options.offset, curPoint.y+this.options.offset]));
+				
+				
+				this._points.push(L.point([curPoint.x+x_offset, curPoint.y+y_offset]));
 			}
 		}
 		
