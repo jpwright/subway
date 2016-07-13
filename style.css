@@ -64,33 +64,32 @@ textarea.station-name-edit {
     font-size: 1em;
 }
 
+.station-buttons {
+}
+
 .station-content-button {
     cursor: pointer;
     display: inline-block;
-    position: absolute;
-    bottom: 25px;
+    margin: 2px;
     padding: 5px;
     background-color: #333333;
 }
 
 .station-delete {
-    right: 5px;
-    width: 35px;
+    float: right;
 }
 
 .station-build {
-    right: 85px;
+    float: right;
 }
 
 .station-transfer {
-    right: 55px;
-    width: 45px;
+    float: right;
     text-align: center;
 }
 
 .subway-lines {
-    width: 100%;
-    margin: 0 auto;
+    
 }
 
 .subway-line-group {

@@ -137,6 +137,7 @@
 
     var station_layer = L.featureGroup();
     var curve_layer = L.featureGroup();
+    var debug_layer = L.featureGroup();
 
     var map = L.map('map', {
         fullscreenControl: true,
@@ -147,6 +148,7 @@
 
     map.addLayer(curve_layer);
     map.addLayer(station_layer);
+    map.addLayer(debug_layer);
 
     //L.control.scale().addTo(map);
 

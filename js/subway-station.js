@@ -41,10 +41,10 @@ class Station {
             var line = this.lines[i];
             station_content += '<div class="subway-line '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div></div>';
         }
-        station_content += '</div>';
+        station_content += ' </div>';
 
 
-        station_content += '<div class="station-content-button station-transfer" id="transfer-'+this.id.toString()+'">Transfer</div>';
+        station_content += '<div class="station-buttons"><div class="station-content-button station-transfer" id="transfer-'+this.id.toString()+'">Transfer</div>';
         
         if (!is_in_array(N_active_line.id, this.lines)) {
             station_content += '<div class="station-content-button station-build line-'+N_active_line.id.toString()+'" id="build-'+this.id.toString()+'">Build <div class="subway-line-mini '+N_active_line.css+'"><div class="height_fix"></div><div class="content">'+N_active_line.html+'</div></div></div>';
@@ -56,6 +56,11 @@ class Station {
             station_content += 'line-'+N_lines[line].id.toString()+' ';
         }
         station_content += '" id="delete-'+this.id.toString()+'">Delete</div>';
+        station_content += '</div><div style="clear: both;"></div>';
+        
+        if (DEBUG_MODE)
+            station_content += '<div>'+this.id.toString()+'</div>';
+        
         station_content += '</div>';
         
         station_popup.setContent(station_content);
@@ -106,9 +111,29 @@ class Station {
         }
         
         for (var j = 0; j < impacted_lines.length; j++) {
+            N_lines[impacted_lines[j]].generate_draw_map();
+            N_lines[impacted_lines[j]].generate_control_points();
+        }
+        for (var j = 0; j < impacted_lines.length; j++) {
             N_lines[impacted_lines[j]].draw();
         }
 
+    }
+    
+    set_marker_style() {
+        
+        if (lines_to_groups(this.drawmaps()).length >= STATION_MARKER_SCALE_THRESHOLD) {
+            this.marker.setRadius(lines_to_groups(this.drawmaps()).length * TRACK_WIDTH / 2.0);
+        } else if (lines_to_groups(this.drawmaps()).length >= STATION_MARKER_HUGE_THRESHOLD || this.lines.length > 12) {
+            this.marker.setRadius(MARKER_RADIUS_HUGE);
+        } else if (lines_to_groups(this.drawmaps()).length >= STATION_MARKER_LARGE_THRESHOLD || this.lines.length > 8) {
+            this.marker.setRadius(MARKER_RADIUS_LARGE);
+        }
+        if (this.drawmaps().length > this.lines.length || this.lines.length == 1) {
+            this.marker.setStyle({color: "white", fillColor: "black", weight: 2});
+        } else {
+            this.marker.setStyle({color: "black", fillColor: "white", weight: 3});
+        }
     }
 }
 
@@ -137,6 +162,7 @@ function geocode_to_station(geo, line) {
     
     for (var i = 0; i < impacted_lines.length; i++) {
         N_lines[impacted_lines[i]].generate_draw_map();
+        N_lines[impacted_lines[i]].generate_control_points();
     }
     for (var i = 0; i < impacted_lines.length; i++) {
         N_lines[impacted_lines[i]].draw();

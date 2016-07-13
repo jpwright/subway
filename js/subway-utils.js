@@ -71,24 +71,37 @@ function debug_voxels() {
     }
 }
 
+function debug_control_points(c) {
+    for (var i = 0; i < c.length; i++) {
+        console.log("Set: ("+c[i][0][0]+","+c[i][0][1]+"), ("+c[i][1][0]+","+c[i][1][1]+")");
+    }
+}
+
 function redraw_all_lines() {
     for (var i = 0; i < N_lines.length; i++) {
         N_lines[i].draw();
     }
 }
 
-function average_control_points(control_points_to_average) {
+function average_control_points(cpta) {
 
     // Takes in a 3d array of pairs of control points (each control point being an x,y pair)
-    var num_sets = control_points_to_average.length;
+    var num_sets = cpta.length;
     var cp_average = [[0.0,0.0],[0.0,0.0]];
     for (var i = 0; i < num_sets; i++) {
         for (var j = 0; j < 2; j++) {
             for (var k = 0; k < 2; k++) {
-                cp_average[j][k] += (control_points_to_average[i][j][k] * 1.0) / (num_sets * 1.0);
+                cp_average[j][k] += (cpta[i][j][k] * 1.0) / (num_sets * 1.0);
             }
         }
     }
     return cp_average;
     
+}
+
+function clear_debug_layer() {
+    
+    map.removeLayer(debug_layer);
+    debug_layer = L.featureGroup();
+    map.addLayer(debug_layer);
 }

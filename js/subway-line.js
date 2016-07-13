@@ -201,7 +201,7 @@ class Line {
     }
 
     draw() {
-        console.log("Drawing line "+this.name);
+        //console.log("Drawing line "+this.name);
         // Remove existing tracks.
         for (var i = 0; i < this.tracks.length; i++) {
             var track = this.tracks[i];
@@ -213,13 +213,11 @@ class Line {
 
         var curve_options = {color: this.color_bg, weight: TRACK_WIDTH, fill: false, smoothFactor: 1.0, offset: 0};
 
-        var cp_lat = 0.0;
-        var cp_lng = 0.0;
-        var cp_set = false;
-
         if (USE_CURVED_TRACKS) {
             
             if (this.draw_map.length > 1) {
+                
+                /*
                 var coordinates = []
                 for (i = 0; i < this.draw_map.length; i++) {
                     coordinates.push({"x": N_stations[this.draw_map[i]].marker.getLatLng().lng, "y": N_stations[this.draw_map[i]].marker.getLatLng().lat});
@@ -237,12 +235,16 @@ class Line {
                 };
                 
                 var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
+                */
+                
+                // Adjust marker style for the station outside the loop.
+                N_stations[this.draw_map[this.draw_map.length-1]].set_marker_style();
                 
                 for (i = 1; i < this.draw_map.length; i++) {
                     
                     var bezier_options = ['M', [N_stations[this.draw_map[i-1]].marker.getLatLng().lat, N_stations[this.draw_map[i-1]].marker.getLatLng().lng]];
                     
-                    this.control_points[i-1] = [[spline.controls[i-1][1].y, spline.controls[i-1][1].x], [spline.controls[i][0].y, spline.controls[i][0].x]];
+                    //this.control_points[i-1] = [[spline.controls[i-1][1].y, spline.controls[i-1][1].x], [spline.controls[i][0].y, spline.controls[i][0].x]];
                     
                     var station_prev = N_stations[this.draw_map[i-1]];
                     var station_next = N_stations[this.draw_map[i]];
@@ -263,21 +265,41 @@ class Line {
                             unique_group_index = j;
                     }
                     
-                    var c = unique_group_index - (unique_groups.length - 1)/2.0;
+                    // Offset the line accordingly.
+                    var swap_control_points = false;
+                    if (unique_groups.length > 1) {
+                        var c = unique_group_index - (unique_groups.length - 1)/2.0;
+                        if (parity) {
+                            curve_options["offset"] = c*TRACK_OFFSET;
+                        } else {
+                            curve_options["offset"] = c*-1*TRACK_OFFSET;
+                            swap_control_points = true;
+                        }
+                    } else {
+                        curve_options["offset"] = 0.0;
+                    }
                     
+                    
+                    var control_point_1 = 0.0;
+                    var control_point_2 = 0.0;
+                        
                     
                     if (station_drawmaps.length == 1) {
                         // No other lines impact this station. 
-                        bezier_options.push('C');
-                        bezier_options.push(this.control_points[i-1][0]);
-                        bezier_options.push(this.control_points[i-1][1]);
-                        bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
+                        
+                        control_point_1 = this.control_points[i-1][0];
+                        control_point_2 = this.control_points[i-1][1]
+                        
                     } else {
                         // Iterate through this other station's drawmaps.
                         var control_points_to_average = [[this.control_points[i-1][0], this.control_points[i-1][1]]];
                         
                         var station_ids_to_check = [N_stations[this.draw_map[i]].id];
                         
+                        
+                        if (station_next.id == 282 || station_prev.id == 282) {
+                            var debugme = true;
+                        }
                         
                         for (var j = 0; j < station_drawmaps.length; j++) {
                             // Only consider different lines.
@@ -288,8 +310,9 @@ class Line {
                                 if (station_position_in_line + 1 < N_lines[station_drawmaps[j]].draw_map.length) {
                                     if (is_in_array(N_lines[station_drawmaps[j]].draw_map[station_position_in_line + 1], station_ids_to_check)) {
                                         var cp_to_push = N_lines[station_drawmaps[j]].control_points[station_position_in_line];
-                                        if (cp_to_push != null)
+                                        if (cp_to_push != null) {
                                             control_points_to_average.push(cp_to_push);
+                                        }
                                     }
                                 }
                                 
@@ -297,59 +320,50 @@ class Line {
                                 if (station_position_in_line - 1 >= 0) {
                                     if (is_in_array(N_lines[station_drawmaps[j]].draw_map[station_position_in_line - 1], station_ids_to_check)) {
                                         var cp_to_push = N_lines[station_drawmaps[j]].control_points[station_position_in_line - 1];
-                                        if (cp_to_push != null)
-                                            control_points_to_average.push(cp_to_push.reverse());
+                                        if (cp_to_push != null) {
+                                            cp_to_push = cp_to_push.slice(0).reverse();
+                                            control_points_to_average.push(cp_to_push);
+                                        }
                                     }
                                 }
                                 
                             }
                         }
-                        var control_point_1;
-                        var control_point_2;
-                        
                         // Average the control points and push them
                         if (control_points_to_average.length > 1) {
-                            var cp_average = average_control_points(control_points_to_average);
-                            control_point_1 = cp_average[0];
-                            control_point_2 = cp_average[1];
+                            var cpa = average_control_points(control_points_to_average);
+                            control_point_1 = cpa[0];
+                            control_point_2 = cpa[1];
+                            
+                            /*if (swap_control_points) {
+                                var control_point_save = control_point_2;
+                                control_point_2 = control_point_1;
+                                control_point_1 = control_point_save;
+                            }*/
+                        
                         } else {
                             control_point_1 = this.control_points[i-1][0];
                             control_point_2 = this.control_points[i-1][1];
                         }
                         
-                        bezier_options.push('C');
-                        
-                
-                        bezier_options.push(control_point_1);
-                        bezier_options.push(control_point_2);
-                        bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
 
+                        
                     }
                     
+                    bezier_options.push('C');
+                    
+                    bezier_options.push(control_point_1);
+                    bezier_options.push(control_point_2);
+                    bezier_options.push([N_stations[this.draw_map[i]].marker.getLatLng().lat, N_stations[this.draw_map[i]].marker.getLatLng().lng]);
                     
                     // For testing control points
-                    //L.circle([spline.controls[i-1][1].y, spline.controls[i-1][1].x], 10).addTo(map);
-                    //L.circle([spline.controls[i][0].y, spline.controls[i][0].x], 10).addTo(map);
-                    
-
-                    // Offset the line accordingly.
-                    
-                    if (unique_groups.length > 1) {
-                        var c = unique_group_index - (unique_groups.length - 1)/2.0;
-                        if (parity)
-                        //if (false)
-                            curve_options["offset"] = c*TRACK_OFFSET;
-                        else
-                            curve_options["offset"] = c*-1*TRACK_OFFSET;
-                    } else {
-                        curve_options["offset"] = 0.0;
+                    if (DEBUG_MODE) {
+                        debug_layer.addLayer(L.circle([control_point_1[0], control_point_1[1]], 10, {stroke: false, color: 'blue', fillOpacity: 1.0}));
+                        debug_layer.addLayer(L.circle([control_point_2[0], control_point_2[1]], 10, {stroke: false, color: 'red', fillOpacity: 1.0}));
                     }
                     
-                    
-                    // Set the marker size based on number of tracks.
-                    if (lines_to_groups(station_prev.drawmaps()).length >= STATION_MARKER_LARGE_THRESHOLD || station_prev.lines.length > 8) {
-                        station_prev.marker.setRadius(MARKER_RADIUS_LARGE);
-                    }
+                    // Adjust marker styles.
+                    station_prev.set_marker_style();
                 
                     var track = L.curve(bezier_options, curve_options);
                     

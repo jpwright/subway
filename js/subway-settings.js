@@ -2,7 +2,10 @@
 var CURVE_THRESHOLD = 0.005; // Max overshoot from curve momentum.
 var MARKER_RADIUS_DEFAULT = 6.0;
 var MARKER_RADIUS_LARGE = 8.0;
+var MARKER_RADIUS_HUGE = 12.0;
 var STATION_MARKER_LARGE_THRESHOLD = 3; // Number of groups needed to force a large station marker
+var STATION_MARKER_HUGE_THRESHOLD = 4;
+var STATION_MARKER_SCALE_THRESHOLD = 6;
 var TRACK_WIDTH = 6.0;
 var TRACK_OFFSET = 6.0;
 var TRANSFER_WIDTH = 3.0;
@@ -10,6 +13,8 @@ var TRANSFER_WIDTH = 3.0;
 var USE_CURVED_TRACKS = true;
 var CURVE_OVERSHOOT = 0.5;
 var BEZIER_SHARPNESS = 0.6;
+
+var DEBUG_MODE = false;
 
 // Map rendering parameters
 var SHARED_STRETCH_THRESHOLD = 8; // Max number of "local" stations in a shared stretch.

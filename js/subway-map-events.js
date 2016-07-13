@@ -50,13 +50,37 @@ function delete_station_event(e) {
     var station_id = $(this).attr('id').replace('delete-', '');
     var station = N_stations[station_id];
     
+    var impacted_lines = N_stations[station_id].drawmaps();
+    var station_lines = impacted_lines;
+    
+    for (var i = 0; i < station_lines.length; i++) {
+        var line_id = station_lines[i];
+        var line = N_lines[line_id];
+        
+        var index = line.stations.indexOf(station_id);
+        
+        var start_index = Math.max(0, index - SHARED_STRETCH_THRESHOLD);
+        var end_index = Math.min(index + SHARED_STRETCH_THRESHOLD, line.stations.length);
+        
+        // Add drawmaps of nearby stations
+        for (var j = start_index; j < end_index; j++) {
+            var drawmaps = N_stations[line.stations[j]].drawmaps();
+            for (var k = 0; k < drawmaps.length; k++) {
+                if (!is_in_array(drawmaps[k], impacted_lines))
+                    impacted_lines.push(drawmaps[k]);
+            }
+        }
+        
+    }
+    
     N_stations[station_id].delete();
 
-    var drawmaps = N_stations[station_id].drawmaps()
-    for (var i = 0; i < drawmaps.length; i++) {
-        var line_id = drawmaps[i];
-        N_lines[line_id].generate_draw_map();
-        N_lines[line_id].draw();
+    for (var i = 0; i < impacted_lines.length; i++) {
+        N_lines[impacted_lines[i]].generate_draw_map();
+        N_lines[impacted_lines[i]].generate_control_points();
+    }
+    for (var i = 0; i < impacted_lines.length; i++) {
+        N_lines[impacted_lines[i]].draw();
     }
 
     regenerate_popups();
@@ -76,8 +100,9 @@ function build_to_station_event(e) {
     for (c in build_classes) {
         if (build_classes[c].indexOf('line-') > -1) {
             var line = build_classes[c].replace('line-', '');
-            station_lines.push(line);
-            impacted_lines.push(line);
+            station_lines.push(parseInt(line));
+            if (!is_in_array(parseInt(line), impacted_lines))
+                impacted_lines.push(parseInt(line));
         }
     }
 
@@ -105,6 +130,7 @@ function build_to_station_event(e) {
 
     for (var i = 0; i < impacted_lines.length; i++) {
         N_lines[impacted_lines[i]].generate_draw_map();
+        N_lines[impacted_lines[i]].generate_control_points();
     }
     for (var i = 0; i < impacted_lines.length; i++) {
         N_lines[impacted_lines[i]].draw();
@@ -149,7 +175,7 @@ function line_select_click_handler(td) {
                 $(td).children(".content").text("S");
                 $(td).removeClass("subway-shuttle-add");
                 number_of_shuttles += 1;
-                if (number_of_shuttles < 5) {
+                if (number_of_shuttles < 3) {
                     $(td).parent().append(newShuttleTemplate(number_of_shuttles+1));
                 }
             }
