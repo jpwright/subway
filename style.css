@@ -439,3 +439,9 @@ textarea.station-name-edit {
 .tooltip:hover .tooltiptext {
     visibility: visible;
 }
+
+.no-hover:hover {
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}

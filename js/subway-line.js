@@ -228,32 +228,11 @@ class Line {
         // Clear tracks array.
         this.tracks = [];
 
-        var curve_options = {color: this.color_bg, weight: TRACK_WIDTH, fill: false, smoothFactor: 1.0, offset: 0};
+        var curve_options = {"color": this.color_bg, "weight": TRACK_WIDTH, "fill": false, "smoothFactor": 1.0, "offset": 0, "clickable": false, "pointer-events": "none", "className": "no-hover"};
 
         if (USE_CURVED_TRACKS) {
             
             if (this.draw_map.length > 1) {
-                
-                /*
-                var coordinates = []
-                for (i = 0; i < this.draw_map.length; i++) {
-                    coordinates.push({"x": N_stations[this.draw_map[i]].marker.getLatLng().lng, "y": N_stations[this.draw_map[i]].marker.getLatLng().lat});
-                }
-                
-                var turf_line = {
-                    "type": "Feature",
-                    "properties": {
-                        "stroke": "#f00"
-                    },
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": coordinates
-                    }
-                };
-                
-                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
-                */
-                
                 
                 for (i = 1; i < this.draw_map.length; i++) {
                     
