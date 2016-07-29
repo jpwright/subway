@@ -21,6 +21,12 @@ function handle_files(files) {
     
 }
 
+function handle_server_file(file) {
+    $.getJSON(file, function(data) {
+        load_game_json(data);
+    });
+}
+
 function load_game_json(data) {
     initialize_game_state();
     
@@ -59,9 +65,12 @@ function load_game_json(data) {
         t.draw();
         N_transfers.push(t);
     }
+    
+    
+    station_layer.bringToFront();
 
     generate_route_diagram(N_active_line);
-    calculateTotalRidership();
+    calculate_total_ridership();
 }
 
 function save_game_json() {

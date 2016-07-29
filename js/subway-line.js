@@ -5,7 +5,8 @@ class Line {
         this.css = css;
         this.color_bg = color_bg;
         this.color_text = color_text;
-
+        this.branch = false;
+        
         this.stations = [];
         this.draw_map = [];
         this.tracks = [];
@@ -84,6 +85,22 @@ class Line {
         }
 
         return line_insertion_pos;
+    }
+    
+    remove_station(station_id) {
+        
+        if (N_stations[station_id].lines.length == 1) {
+            N_stations[station_id].delete();
+        } else {
+            var station_pos = this.stations.indexOf(station_id);
+            if (station_pos > -1)
+                this.stations.splice(station_pos, 1);
+            
+            var line_pos = N_stations[station_id].lines.indexOf(this.id);
+            if (line_pos > -1)
+                N_stations[station_id].lines.splice(line_pos, 1);
+        }
+        
     }
     
     generate_draw_map() {
@@ -190,7 +207,7 @@ class Line {
                     }
                 };
                 
-                var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
+                var spline = new BezierSpline({points: coordinates, sharpness: BEZIER_SHARPNESS});
                 
                 for (i = 1; i < this.draw_map.length; i++) {
                     var bezier_options = ['M', [N_stations[this.draw_map[i-1]].marker.getLatLng().lat, N_stations[this.draw_map[i-1]].marker.getLatLng().lng]];
@@ -201,7 +218,7 @@ class Line {
     }
 
     draw() {
-        //console.log("Drawing line "+this.name);
+        
         // Remove existing tracks.
         for (var i = 0; i < this.tracks.length; i++) {
             var track = this.tracks[i];
@@ -237,8 +254,6 @@ class Line {
                 var spline = new BezierSpline({points: coordinates, duration: 50000, sharpness: BEZIER_SHARPNESS});
                 */
                 
-                // Adjust marker style for the station outside the loop.
-                N_stations[this.draw_map[this.draw_map.length-1]].set_marker_style();
                 
                 for (i = 1; i < this.draw_map.length; i++) {
                     
@@ -362,15 +377,21 @@ class Line {
                         debug_layer.addLayer(L.circle([control_point_2[0], control_point_2[1]], 10, {stroke: false, color: 'red', fillOpacity: 1.0}));
                     }
                     
-                    // Adjust marker styles.
-                    station_prev.set_marker_style();
                 
                     var track = L.curve(bezier_options, curve_options);
                     
                     //var track = L.polyline(latlngs, curve_options);
                     curve_layer.addLayer(track);
                     this.tracks.push(track);
+                    
+                    // Adjust marker styles.
+                    station_prev.set_marker_style();
                 }
+                
+                
+                // Adjust marker style for the station outside the loop.
+                N_stations[this.draw_map[this.draw_map.length-1]].set_marker_style();
+            
             }
             
         } else {
@@ -419,7 +440,6 @@ class Line {
             }
         }
 
-        station_layer.bringToFront();
     }
 
 }
@@ -460,7 +480,7 @@ function find_line_by_name(name) {
 
 function find_line_by_html(html) {
 
-    // Loop through all lines, and return the 1st one that matches the name.
+    // Loop through all lines, and return the 1st one that matches the html.
     for (var i = 0; i < N_lines.length; i++) {
         if (N_lines[i].html == html) {
             return N_lines[i];

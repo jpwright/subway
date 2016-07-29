@@ -81,6 +81,8 @@ function redraw_all_lines() {
     for (var i = 0; i < N_lines.length; i++) {
         N_lines[i].draw();
     }
+    
+    station_layer.bringToFront();
 }
 
 function average_control_points(cpta) {
@@ -97,6 +99,15 @@ function average_control_points(cpta) {
     }
     return cp_average;
     
+}
+
+function number_of_active_stations() {
+    var n = 0;
+    for (var i = 0; i < N_stations.length; i++) {
+        if (N_stations[i].active)
+            n += 1;
+    }
+    return n;
 }
 
 function clear_debug_layer() {

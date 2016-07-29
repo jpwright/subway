@@ -37,9 +37,15 @@ class Station {
         station_content += '<div class="station-content"><div class="station-info">'+this.info+'<br /><i class="fa fa-user" aria-hidden="true"></i> '+Math.round(this.riders).toString()+'</div>';
         station_content += '<div class="station-info subway-lines">';
         
+        var html_css_combos = [];
+        
         for (var i = 0; i < this.lines.length; i++) {
             var line = this.lines[i];
-            station_content += '<div class="subway-line '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div></div>';
+            var html_css_combo = N_lines[line].html + ' ' + N_lines[line].css;
+            if (!is_in_array(html_css_combo, html_css_combos)) {
+                station_content += '<div id="'+this.id.toString()+":"+line.toString()+'" class="tooltip subway-deletable subway-line '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div><span class="tooltiptext">Click to delete</span></div>';
+                html_css_combos.push(html_css_combo);
+            }
         }
         station_content += ' </div>';
 
@@ -110,6 +116,16 @@ class Station {
 
         }
         
+        // Remove transfers
+        for (var j = 0; j < N_transfers.length; j++) {
+            var transfer = N_transfers[j];
+            if (this.id == transfer.origin || this.id == transfer.end) {
+                transfer.undraw();
+            }
+        }
+        
+        /*
+        // Redraw lines
         for (var j = 0; j < impacted_lines.length; j++) {
             N_lines[impacted_lines[j]].generate_draw_map();
             N_lines[impacted_lines[j]].generate_control_points();
@@ -117,6 +133,9 @@ class Station {
         for (var j = 0; j < impacted_lines.length; j++) {
             N_lines[impacted_lines[j]].draw();
         }
+        
+        station_layer.bringToFront();
+        */
 
     }
     
@@ -168,8 +187,9 @@ function geocode_to_station(geo, line) {
         N_lines[impacted_lines[i]].draw();
     }
 
+    station_layer.bringToFront();
     generate_route_diagram(line);
-    calculateTotalRidership();
+    calculate_total_ridership();
             
 }
 

@@ -4,11 +4,13 @@
 <head>
     <title>Robert Moses Game</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="style.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
@@ -26,8 +28,6 @@
 
     <script src="js/leaflet.curve.js"></script>
     <script src='js/leaflet-heat.js'></script>
-    <script src='js/leaflet.label.js'></script>
-    <script src='js/leaflet.polylineoffset.js'></script>
     <script src='js/leaflet-pip.js'></script>
     <script src='js/turf.min.js'></script>
     <script src='js/spline.js'></script>
@@ -53,102 +53,173 @@
 
     <div id="map">
     </div>
+    <div id="starter">
+    
+        <div id="game-header">Shadow Subway</div>
+        <div id="game-video">
+            <video autoplay="autoplay" loop="loop">
+                <source src="img/guide.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        <div id="game-start">
+        
+            <div class="game-start-section">
+                <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
+            </div>
+            <div class="game-start-section">
+                <div class="game-start-button game-start-choice-small" id="game-start-2016"><img src="img/map-subway-2016.png" />2016 Present-Day Map</div>
+                <div class="game-start-button game-start-choice-small" id="game-start-2025"><img src="img/map-subway-2016.png" />2025 Planned Subway Map</div>
+                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-2001"><img src="img/map-subway-2016.png" />2001 Map</div>
+                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1972"><img src="img/map-subway-2016.png" />1972 Vignelli Map</div>
+                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963"><img src="img/map-subway-2016.png" />1963 Nester's Map</div>
+            </div>
+            
+        </div>
+    
+    </div>
     <div id="options">
-    Select a Line<br />
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-blue subway-selected"><div class="height_fix"></div><div class="content">A</div></div>
-        <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">C</div></div>
-        <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">E</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">B</div></div>
-        <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">D</div></div>
-        <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">F</div></div>
-        <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">M</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-light-green"><div class="height_fix"></div><div class="content">G</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">J</div></div>
-        <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">Z</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-silver"><div class="height_fix"></div><div class="content">L</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">N</div></div>
-        <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">Q</div></div>
-        <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">R</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-gray subway-shuttle" id="S-1"><div class="height_fix"></div><div class="content">S</div></div>
-        <div class="subway-line subway-clickable subway-gray subway-shuttle subway-shuttle-add" id="S-2"><div class="height_fix"></div><div class="content">+</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">1</div></div>
-        <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">2</div></div>
-        <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">3</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">4</div></div>
-        <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">5</div></div>
-        <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">6</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">SI</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-light-yellow" id="subway-airtrain"><div class="height_fix"></div><div class="content">&#9992;</div></div>
-    </div>
-    <div class="subway-line-group">
-        <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
-        <div class="subway-line subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
+    <div id="option-section-lines">
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-blue subway-selected"><div class="height_fix"></div><div class="content">A</div></div>
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">C</div></div>
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">E</div></div>
+            <div class="subway-line subway-clickable subway-blue subway-hidden"><div class="height_fix"></div><div class="content">H</div></div>
+            <div class="subway-line subway-clickable subway-blue subway-hidden"><div class="height_fix"></div><div class="content">K</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">B</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">D</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">F</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">M</div></div>
+            <div class="subway-line subway-clickable subway-orange subway-hidden"><div class="height_fix"></div><div class="content">V</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-light-green"><div class="height_fix"></div><div class="content">G</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">J</div></div>
+            <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">Z</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-silver"><div class="height_fix"></div><div class="content">L</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">N</div></div>
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">Q</div></div>
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">R</div></div>
+            <div class="subway-line subway-clickable subway-yellow subway-hidden"><div class="height_fix"></div><div class="content">W</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-gray subway-shuttle" id="S-1"><div class="height_fix"></div><div class="content">S</div></div>
+            <div class="subway-line subway-clickable subway-gray subway-shuttle subway-shuttle-add" id="S-2"><div class="height_fix"></div><div class="content">+</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">1</div></div>
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">2</div></div>
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">3</div></div>
+            <div class="subway-line subway-clickable subway-red subway-hidden"><div class="height_fix"></div><div class="content">9</div></div>
+            <div class="subway-line subway-clickable subway-red subway-hidden"><div class="height_fix"></div><div class="content">13</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">4</div></div>
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">5</div></div>
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">6</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">8</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">10</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">12</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div>
+            <div class="subway-line subway-clickable subway-purple subway-hidden"><div class="height_fix"></div><div class="content">11</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">SI</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-light-yellow" id="subway-airtrain-jfk"><div class="height_fix"></div><div class="content">&#9992;</div></div>
+            <div class="subway-line subway-clickable subway-light-yellow subway-hidden" id="subway-airtrain-lga"><div class="height_fix"></div><div class="content">&#9992;</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
+            <div class="subway-line subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
+        </div>
+        
+        <div class="subway-line-group subway-hidden">
+            <div class="subway-line subway-clickable subway-imaginary subway-maroon subway-hidden"><div class="height_fix"></div><div class="content">MJ</div></div>
+        </div>
+        
+        <div class="subway-line-group subway-hidden">
+            <div class="subway-line subway-clickable subway-hidden subway-blue" id="subway-a-euclid"><div class="height_fix"></div><div class="content">AL</div></div>
+            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-howard"><div class="height_fix"></div><div class="content">&#9992;H</div></div>
+            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-archer"><div class="height_fix"></div><div class="content">&#9992;A</div></div>
+            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-connectors"><div class="height_fix"></div><div class="content">&#9992;C</div></div>
+        </div>
+        
+        
+        <div id="additional-options">
+            <div id="add-lines" class="game-button">Show Additional Lines</div>
+        </div>
     </div>
     
-    <div id="additional-options">
+    <div id="option-section-route">
+        <div id="route-header"><span id="route-triangle"><i class="fa fa-caret-right" aria-hidden="true"></i></span> Route Diagram</div>
+        <div id="route-diagram-container"><div id="route-diagram"></div></div>
     </div>
-
-    <div id="route-diagram">
-    </div>
-
-    </div>
-
-
-    <div id="system-status">
-        <div id="metrocard">
-        <i class="fa fa-credit-card" aria-hidden="true"></i>
-        <span id="metrocard-cost"></span>
-        </div>
-        <div id="ridership">
-        <i class="fa fa-user" aria-hidden="true"></i>
-        <span id="system-ridership"></span>
+    
+    <div id="option-section-status">
+        <div id="game-outcome">
+            <div id="metrocard">
+                <span class="game-icon"><i class="fa fa-credit-card" aria-hidden="true"></i></span>
+                <span id="metrocard-cost"></span>
+                <div class="game-icon-description">Single-ride MetroCard fare</div>
+            </div>
+            <div id="ridership">
+                <span class="game-icon"><i class="fa fa-user" aria-hidden="true"></i></span>
+                <span id="system-ridership"></span>
+                <div class="game-icon-description">Average weekday ridership</div>
+            </div>
+            <div id="rating">
+                <span class="game-icon"><i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                <span id="system-rating"></span>
+                <div class="game-icon-description">Overall system rating</div>
+            </div>
         </div>
         <div id="game-load" class="game-button">Load</div>
         <div id="game-save" class="game-button">Save</div>
     </div>
 
+    </div>
+
+
+    
+
     <script>
 
     var mapbox_token = 'pk.eyJ1IjoianB3cmlnaHQwIiwiYSI6ImNpbjZ1Y212aTA2dGR1ZGtzNHNxZWRkdjIifQ.OgGN3EIjNNB8JsbNRXqqAg';
-
-    var station_layer = L.featureGroup();
-    var curve_layer = L.featureGroup();
-    var debug_layer = L.featureGroup();
-
+   
     var map = L.map('map', {
         fullscreenControl: true,
     }).setView([40.713, -74.006], 13);
 
-    curve_layer.setZIndex(2).addTo(map);
-    station_layer.setZIndex(3).addTo(map);
-
+    var station_layer = L.featureGroup();
+    var curve_layer = L.featureGroup();
+    var debug_layer = L.featureGroup();
+    
     map.addLayer(curve_layer);
     map.addLayer(station_layer);
     map.addLayer(debug_layer);
+    
+    var layer_ordering = {
+        "curve": curve_layer,
+        "station": station_layer,
+        "debug": debug_layer
+    }
+    
+    var layer_control = L.control.layers(layer_ordering);
+    layer_control.autoZIndex = false;
+    
+    layer_control.addTo(map);
 
     //L.control.scale().addTo(map);
 
@@ -226,6 +297,32 @@
         }
         e.preventDefault(); // prevent navigation to "#"
     });
+    
+    var additional_lines_shown = false;
+    $('#add-lines').click(function(e) {
+        if (additional_lines_shown) {
+            $("#add-lines").text("Show Additional Lines");
+            $(".subway-hidden").hide();
+            additional_lines_shown = false;
+        } else {
+            $("#add-lines").text("Hide Additional Lines");
+            $(".subway-hidden").show();
+            additional_lines_shown = true;
+        }
+    });
+    
+    var route_diagram_shown = false;
+    $("#route-header").click(function(e) {
+        if (!route_diagram_shown) {
+            $("#route-diagram").show();
+            $("#route-triangle").html('<i class="fa fa-caret-down" aria-hidden="true"></i>');
+            route_diagram_shown = true;
+        } else {
+            $("#route-diagram").hide();
+            $("#route-triangle").html('<i class="fa fa-caret-right" aria-hidden="true"></i>');
+            route_diagram_shown = false;
+        }
+    });
 
     function generate_route_diagram(line) {
         var line_stations = line.stations;
@@ -259,8 +356,13 @@
                 }
             }
             
+            var html_css_combos = [];
             for (var q = 0; q < line_transfers.length; q++) {
-                station_entry += '<div class="subway-line-mini '+N_lines[line_transfers[q]].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line_transfers[q]].html+'</div></div>';
+                var html_css_combo = N_lines[line_transfers[q]].html + ' ' + N_lines[line_transfers[q]].css;
+                if (!is_in_array(html_css_combo, html_css_combos)) {
+                    station_entry += '<div class="subway-line-mini '+N_lines[line_transfers[q]].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line_transfers[q]].html+'</div></div>';
+                    html_css_combos.push(html_css_combo);
+                }
             }
                 
             station_entry += '</div></div>';
@@ -284,7 +386,8 @@
 
     $(document).on('click', '.station-build', build_to_station_event);
 
-
+    $(document).on('click', '.subway-deletable', remove_line_from_station_event);
+    
     $(document).on('click', '.station-name', function() {
         var text = $(this).text();
         var sn = $(this);
@@ -321,6 +424,8 @@
                 N_lines[j].draw();
             }
         }
+        
+        station_layer.bringToFront();
 
         number_of_shuttles = 1;
         
@@ -331,6 +436,8 @@
         N_lines = [];
         N_transfers = [];
 
+        // NEVER CHANGE THE ORDER OF THESE or you break saved games
+        // Only add to the end
         N_lines.push(new Line('A', 'A', 'subway-blue', '#0039A6', '#FFFFFF'));
         N_lines.push(new Line('B', 'B', 'subway-orange', '#FF6319', '#FFFFFF'));
         N_lines.push(new Line('C', 'C', 'subway-blue', '#0039A6', '#FFFFFF'));
@@ -360,24 +467,49 @@
         N_lines.push(new Line('AirTrain LGA', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
         N_lines.push(new Line('T', 'T', 'subway-turquoise', '#1E9DBF', '#FFFFFF'));
         N_lines.push(new Line('BQX', 'BQX', 'subway-black', '#212121', '#FFFFFF'));
+        N_lines.push(new Line('S-4', 'S', 'subway-gray', '#808183', '#FFFFFF'));
+        N_lines.push(new Line('W', 'W', 'subway-yellow', '#FCCC0A', '#000000'));
+        N_lines.push(new Line('8', '8', 'subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('9', '9', 'subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('10', '10', 'subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('11', '11', 'subway-purple', '#B933AD', '#FFFFFF'));
+        N_lines.push(new Line('12', '12', 'subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('13', '13', 'subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('H', 'H', 'subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('K', 'K', 'subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('V', 'V', 'subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('JFK Express', '&#9992;', 'subway-turquoise', '#1E9DBF', '#FFFFFF'));
+        N_lines.push(new Line('MJ', 'MJ', 'subway-maroon', '#AB3F57', '#FFFFFF'));
+        N_lines.push(new Line('A-Euclid', 'A', 'subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('AirTrain JFK-Howard', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('AirTrain JFK-Archer', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('AirTrain JFK-Connectors', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
+        
+        
+        find_line_by_name('A-Euclid').branch = true;
+        find_line_by_name('AirTrain JFK-Howard').branch = true;
+        find_line_by_name('AirTrain JFK-Archer').branch = true;
+        find_line_by_name('AirTrain JFK-Connectors').branch = true;
+        
 
         N_active_line = find_line_by_name('A');
 
         N_line_groups = [];
-        N_line_groups.push(new LineGroup('ACE', [find_line_by_name('A').id, find_line_by_name('C').id, find_line_by_name('E').id]));
-        N_line_groups.push(new LineGroup('BDFM', [find_line_by_name('B').id, find_line_by_name('D').id, find_line_by_name('F').id, find_line_by_name('M').id]))
+        N_line_groups.push(new LineGroup('ACE', [find_line_by_name('A').id, find_line_by_name('A-Euclid').id, find_line_by_name('C').id, find_line_by_name('E').id, find_line_by_name('H').id, find_line_by_name('K').id]));
+        N_line_groups.push(new LineGroup('BDFM', [find_line_by_name('B').id, find_line_by_name('D').id, find_line_by_name('F').id, find_line_by_name('M').id, find_line_by_name('V').id]))
         N_line_groups.push(new LineGroup('G', [find_line_by_name('G').id]));
         N_line_groups.push(new LineGroup('JZ', [find_line_by_name('J').id, find_line_by_name('Z').id]));
         N_line_groups.push(new LineGroup('L', [find_line_by_name('L').id]));
-        N_line_groups.push(new LineGroup('NQR', [find_line_by_name('N').id, find_line_by_name('Q').id, find_line_by_name('R').id]));
-        N_line_groups.push(new LineGroup('Shuttles', [find_line_by_name('S-1').id, find_line_by_name('S-2').id, find_line_by_name('S-3').id]));
-        N_line_groups.push(new LineGroup('123', [find_line_by_name('1').id, find_line_by_name('2').id, find_line_by_name('3').id]));
-        N_line_groups.push(new LineGroup('456', [find_line_by_name('4').id, find_line_by_name('5').id, find_line_by_name('6').id]));
-        N_line_groups.push(new LineGroup('7', [find_line_by_name('7').id]));
+        N_line_groups.push(new LineGroup('NQR', [find_line_by_name('N').id, find_line_by_name('Q').id, find_line_by_name('R').id, find_line_by_name('W').id]));
+        N_line_groups.push(new LineGroup('Shuttles', [find_line_by_name('S-1').id, find_line_by_name('S-2').id, find_line_by_name('S-3').id, find_line_by_name('S-4').id]));
+        N_line_groups.push(new LineGroup('123', [find_line_by_name('1').id, find_line_by_name('2').id, find_line_by_name('3').id, find_line_by_name('9').id, find_line_by_name('13').id]));
+        N_line_groups.push(new LineGroup('456', [find_line_by_name('4').id, find_line_by_name('5').id, find_line_by_name('6').id, find_line_by_name('8').id, find_line_by_name('10').id, find_line_by_name('12').id]));
+        N_line_groups.push(new LineGroup('7', [find_line_by_name('7').id, find_line_by_name('11').id]));
         N_line_groups.push(new LineGroup('SIRR', [find_line_by_name('SIRR').id]));
-        N_line_groups.push(new LineGroup('AirTrains', [find_line_by_name('AirTrain JFK').id, find_line_by_name('AirTrain LGA').id]));
-        N_line_groups.push(new LineGroup('T', [find_line_by_name('T').id]));
+        N_line_groups.push(new LineGroup('AirTrains', [find_line_by_name('AirTrain JFK').id, find_line_by_name('AirTrain JFK-Howard').id, find_line_by_name('AirTrain JFK-Archer').id, find_line_by_name('AirTrain JFK-Connectors').id, find_line_by_name('AirTrain LGA').id]));
+        N_line_groups.push(new LineGroup('T', [find_line_by_name('T').id, find_line_by_name('JFK Express').id]));
         N_line_groups.push(new LineGroup('BQX', [find_line_by_name('BQX').id]));
+        N_line_groups.push(new LineGroup('Maroon', [find_line_by_name('MJ').id]));
         
         
 
@@ -385,20 +517,22 @@
 
     initialize_game_state();
 
-    function calculateTotalRidership() {
-        var r = 0;
-        for (var i = 0; i < N_stations.length; i++) {
-            if (N_stations[i].active)
-                r += N_stations[i].riders;
-        }
-        $('#system-ridership').text(Math.round(r).toString());
-
-        var mc_cost = N_stations.length*1000000.0/r;
-        $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
-    }
-
     map.on('click', handle_map_click);
 
+    $(function() {
+        $(".subway-hidden").hide();
+        
+        // Starter screen click handlers
+        $("#game-start-scratch").click(function() {
+            $("#starter").hide();
+        });
+        
+        $(".game-start-button").click(function() {
+            handle_server_file("game-starters/" + $(this).attr("id") + ".json");
+            $("#starter").hide();
+        });
+
+    });
     
 
     </script>
