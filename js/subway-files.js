@@ -89,7 +89,7 @@ function save_game_json() {
     }
 
     $("<a />", {
-        "download": "subway-game-N.json",
+        "download": "bns_saved_game.json",
         "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
     }).appendTo("body")
     .click(function() {
