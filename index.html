@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Robert Moses Game</title>
+    <title>Brand New Subway</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="style.css" />
@@ -27,7 +27,6 @@
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 
     <script src="js/leaflet.curve.js"></script>
-    <script src='js/leaflet-heat.js'></script>
     <script src='js/leaflet-pip.js'></script>
     <script src='js/turf.min.js'></script>
     <script src='js/spline.js'></script>
@@ -55,7 +54,7 @@
     </div>
     <div id="starter">
     
-        <div id="game-header">Shadow Subway</div>
+        <div id="game-header">Brand New Subway</div>
         <div id="game-video">
             <video autoplay="autoplay" loop="loop">
                 <source src="img/guide.mp4" type="video/mp4">
@@ -65,14 +64,19 @@
         <div id="game-start">
         
             <div class="game-start-section">
-                <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
+                <div class="game-start-interior">
+                    <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
+                </div>
             </div>
             <div class="game-start-section">
-                <div class="game-start-button game-start-choice-small" id="game-start-2016"><img src="img/map-subway-2016.png" />2016 Present-Day Map</div>
-                <div class="game-start-button game-start-choice-small" id="game-start-2025"><img src="img/map-subway-2016.png" />2025 Planned Subway Map</div>
-                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-2001"><img src="img/map-subway-2016.png" />2001 Map</div>
-                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1972"><img src="img/map-subway-2016.png" />1972 Vignelli Map</div>
-                <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963"><img src="img/map-subway-2016.png" />1963 Nester's Map</div>
+                <div class="game-start-interior">
+                    <div class="game-start-descriptor">Start from:</div>
+                    <div class="game-start-button game-start-choice-small" id="game-start-2016">2016 Present-Day Map</div>
+                    <div class="game-start-button game-start-choice-small" id="game-start-2025">2025 Planned Subway Map</div>
+                    <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-2001">2001 Map</div>
+                    <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1972">1972 Vignelli Map</div>
+                    <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963">1963 Nester's Map</div>
+                </div>
             </div>
             
         </div>
@@ -187,6 +191,7 @@
         </div>
         <div id="game-load" class="game-button">Load</div>
         <div id="game-save" class="game-button">Save</div>
+        <a id="game-about" class="game-button" href="http://jpwright.net/projects/subway">About this game</a>
     </div>
 
     </div>
@@ -200,6 +205,7 @@
    
     var map = L.map('map', {
         fullscreenControl: true,
+        attributionControl: false
     }).setView([40.713, -74.006], 13);
 
     var station_layer = L.featureGroup();
@@ -219,7 +225,7 @@
     var layer_control = L.control.layers(layer_ordering);
     layer_control.autoZIndex = false;
     
-    layer_control.addTo(map);
+    //layer_control.addTo(map);
 
     //L.control.scale().addTo(map);
 
@@ -259,9 +265,6 @@
     var tracts = new L.geoJson();
     var tracts_layers;
     var turf_polygons = {};
-
-    var population_heat = L.heatLayer([], {radius: 30, max: 0.5, blur: 50}).addTo(map),
-        draw = true;
 
     var tract_centroids = {};
     var tract_nearby = {};
@@ -527,13 +530,23 @@
             $("#starter").hide();
         });
         
-        $(".game-start-button").click(function() {
+        $(".game-start-button").not(".game-start-greyed").click(function() {
             handle_server_file("game-starters/" + $(this).attr("id") + ".json");
             $("#starter").hide();
         });
 
     });
     
+
+    </script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-81626013-1', 'auto');
+      ga('send', 'pageview');
 
     </script>
 </body>

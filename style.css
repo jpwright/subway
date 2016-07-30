@@ -287,42 +287,57 @@ textarea.station-name-edit {
     background: rgba(0, 0, 0, 0.65);
     color: white;
     position: absolute;
-    
 }
 
 #game-header {
     font-size: 3em;
     font-weight: bold;
+    position: relative;
+    bottom: 0px;
     width: 100%;
+    height: 100px;
     text-align: center;
-    padding: 20px;
+    padding: 20px 0;
     margin-bottom: 20px;
 }
 
 #game-video {
     text-align: center;
-    max-height: 45%;
+    top: 100px;
+    bottom: 200px;
+    position: absolute;
+    width: 100%;
 }
 
 #game-video video {
-    width: 50% !important;
-    height: auto !important;
-    margin: 0 auto;
+    
+    right: 0; 
+    top: 0;
+    width: auto;
+    height: 100%;
+    z-index: -100;
+    background-size: cover;
+    overflow: hidden;
 }
 
 #game-start {
     width: 100%;
     position: absolute;
-    bottom: 0;
-    height: 35%;
+    bottom: 0px;
+    height: 200px;
     white-space: nowrap;
+    overflow: hidden;
+}
+
+.game-start-descriptor {
+    margin: 20px auto;
 }
 
 .game-start-choice-large {
     border: 1px solid white;
     padding: 10px;
     cursor: pointer;
-    margin: auto;
+    margin: 20px auto;
     width: 200px;
     height: 100px;
     line-height: 100px;
@@ -332,9 +347,22 @@ textarea.station-name-edit {
 .game-start-section {
     display: block;
     width: 50%;
-    float: left;
     height: 250px;
+    float: left;
     overflow-y: auto;
+}
+
+div.game-start-greyed {
+    color: #777;
+    border: 1px solid #777;
+    cursor: default;
+}
+
+.game-start-interior {
+    margin: 10px;
+    padding: 10px;
+    width: auto;
+    border: 1px solid #777;
 }
 
 .game-start-choice-small {
@@ -342,12 +370,7 @@ textarea.station-name-edit {
     display: block;
     cursor: pointer;
     margin: 20px;
-    padding: 5px;
-}
-
-.game-start-choice-small img {
-    vertical-align: middle;
-    margin-right: 5px;
+    padding: 20px;
 }
 
 
@@ -410,6 +433,8 @@ textarea.station-name-edit {
     border-radius: 5px;
     cursor: pointer;
     display: inline-block;
+    color: #fff;
+    text-decoration: none;
 }
 
 .tooltip {
