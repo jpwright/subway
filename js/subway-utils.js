@@ -23,14 +23,15 @@ function intersect(a, b) {
 function sort_by_group(line_ids) {
     // Takes an array of line IDs, and sorts based on the group they're in.
     // e.g. [B,C] -> [B,C], [A,B,C,D] -> [A,C,B,D]
-    
+
     return line_ids.sort(function(x,y) {
         var group_x = lines_to_groups([x])[0];
         var group_y = lines_to_groups([y])[0];
-        if (group_x == group_y)
+        if (group_x == group_y) {
             return N_line_groups[group_x].lines.indexOf(x) > N_line_groups[group_y].lines.indexOf(y);
-        else
+        } else {
             return group_x > group_y;
+        }
     });
 }
 
@@ -57,16 +58,16 @@ function find_stations_by_name(station_name) {
 }
 
 function debug_voxels() {
-    
+
     for (var lat = LAT_MIN; lat < LAT_MAX; lat += VOXELS_RES_LAT) {
         for (var lng = LNG_MIN; lng < LNG_MAX; lng += VOXELS_RES_LNG) {
             var voxel_i = Math.round((lat - LAT_MIN)/VOXELS_RES_LAT);
             var voxel_j = Math.round((lng - LNG_MIN)/VOXELS_RES_LNG);
-            
+
             console.log("Adding voxel at "+voxel_i.toString()+","+voxel_j.toString());
             var voxel = L.rectangle([[lat, lng], [lat+VOXELS_RES_LAT, lng+VOXELS_RES_LNG]], {color: "#ff7800", weight: 0, fillOpacity: demand[voxel_i][voxel_j]/1000.0});
             voxel.addTo(map);
-            
+
         }
     }
 }
@@ -81,7 +82,7 @@ function redraw_all_lines() {
     for (var i = 0; i < N_lines.length; i++) {
         N_lines[i].draw();
     }
-    
+
     station_layer.bringToFront();
 }
 
@@ -98,20 +99,21 @@ function average_control_points(cpta) {
         }
     }
     return cp_average;
-    
+
 }
 
 function number_of_active_stations() {
     var n = 0;
     for (var i = 0; i < N_stations.length; i++) {
-        if (N_stations[i].active)
+        if (N_stations[i].active) {
             n += 1;
+        }
     }
     return n;
 }
 
 function clear_debug_layer() {
-    
+
     map.removeLayer(debug_layer);
     debug_layer = L.featureGroup();
     map.addLayer(debug_layer);

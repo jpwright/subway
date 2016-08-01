@@ -1,33 +1,34 @@
 class Geocoder {
     constructor (latlng) {
-        
+
         this.latlng = latlng;
         this.name = '';
         this.info = '';
         this.done = false;
-        
+
     }
-    
+
     geocode(line) {
-        
+
         var geo = this;
-        
+
         geocode_service.reverse().distance(500).latlng(this.latlng).run(function(error, result) {
             geo.name = '';
             geo.info = '';
-            
+
             var geocode_success = true;
             if (error) {
                 console.log(error);
                 geocode_success = false;
             } else {
                 var geocoded_name = result.address.Address;
-                if (geocoded_name == null)
+                if (geocoded_name == null) {
                     geocoded_name = "";
+                }
 
                 var city = result.address.City;
                 geo.name = clean_address(geocoded_name);
-                
+
                 if (city != "New York") {
                     geo.name = clean_city(city) + ' - ' + geo.name;
                     geo.info += clean_city(city);
@@ -36,7 +37,7 @@ class Geocoder {
 
             var enc_boroughs = [];
             var enc_neighborhoods = [];
-            
+
             var enc_landmarks = [];
             var neighborhood_in_station_name = false;
 
@@ -83,7 +84,7 @@ class Geocoder {
                     geo.name = enc_landmarks[0];
                 }
             }
-        
+
             geocode_to_station(geo, line)
         });
     }
