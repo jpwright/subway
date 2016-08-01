@@ -30,6 +30,12 @@ function handle_server_file(file) {
 function load_game_json(data) {
     initialize_game_state();
     
+    for (var j = 0; j < data["lines"].length; j++) {
+        var d = data["lines"][j];
+        N_lines[d["id"]].stations = d["stations"];
+        N_lines[d["id"]].draw_map = d["draw_map"];
+    }
+    
     for (var i = 0; i < data["stations"].length; i++) {
         var d = data["stations"][i];
         
@@ -44,12 +50,16 @@ function load_game_json(data) {
         station.generate_popup();
     }
     
-    for (var j = 0; j < data["lines"].length; j++) {
-        var d = data["lines"][j];
-        N_lines[d["id"]].stations = d["stations"];
-        N_lines[d["id"]].draw_map = d["draw_map"];
+    // Correct line array in each station in case of corrupted save game
+    for (var i = 0; i < N_stations.length; i++) {
+        N_stations[i].lines = [];
     }
-        
+    for (var j = 0; j < N_lines.length; j++) {
+        var line_stations  = N_lines[j].stations;
+        for (var k = 0; k < line_stations.length; k++) {
+            N_stations[line_stations[k]].lines.push(N_lines[j].id);
+        }
+    }
     
     for (var k = 0; k < N_lines.length; k++) {
         N_lines[k].generate_draw_map();
