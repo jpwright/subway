@@ -437,6 +437,17 @@ div.game-start-greyed {
     text-decoration: none;
 }
 
+.attribution {
+    font-size: 0.6em;
+    color: #aaaaaa;
+    width: 90%;
+    text-align: right;
+}
+
+.attribution a {
+    color: #bbbbbb;
+}
+
 .tooltip {
     display: inline-block;
     position: relative;

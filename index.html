@@ -192,6 +192,7 @@
         <div id="game-load" class="game-button">Load</div>
         <div id="game-save" class="game-button">Save</div>
         <a id="game-about" class="game-button" href="http://jpwright.net/projects/subway">About this game</a>
+        <div class="attribution"><a href="http://leafletjs.com/">Leaflet</a> | Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ</div>
     </div>
 
     </div>
@@ -223,17 +224,10 @@
     }
     
     var layer_control = L.control.layers(layer_ordering);
-    layer_control.autoZIndex = false;
-    
-    //layer_control.addTo(map);
-
-    //L.control.scale().addTo(map);
-
-    var tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token='+mapbox_token, {
-        maxZoom: 18,
-        minZoom: 12,
-        attribution: '',
-        id: 'mapbox.light'
+    L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '',
+            maxZoom: 16,
+            minZoom: 12
     }).addTo(map);
 
     var neighborhoods = new L.geoJson();
