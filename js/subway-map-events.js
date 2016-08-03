@@ -162,7 +162,7 @@ function build_to_station_event(e) {
         var line_id = station_lines[i];
         var line = N_lines[line_id];
 
-        $('div.subway-lines').append('<div class="subway-line '+line.css+'"><div class="height_fix"></div><div class="content">'+line.html+'</div></div>');
+        $('div.subway-lines').append('<div class="'+line.css+'"><div class="height_fix"></div><div class="content">'+line.html+'</div></div>');
 
         var new_index = line.insert_station(parseInt(station_id));
 

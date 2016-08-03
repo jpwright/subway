@@ -146,6 +146,7 @@
         <div class="subway-line-group">
             <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
             <div class="subway-line subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
+            <div class="subway-line-long subway-clickable subway-imaginary subway-yellow"><div class="height_fix"></div><div class="content">TriboroRX</div></div>
         </div>
         
         <div class="subway-line-group subway-hidden">
@@ -231,7 +232,6 @@
     }).addTo(map);
 
     var neighborhoods = new L.geoJson();
-    //neighborhoods.addTo(map);
 
     $.ajax({
         dataType: "json",
@@ -435,52 +435,53 @@
 
         // NEVER CHANGE THE ORDER OF THESE or you break saved games
         // Only add to the end
-        N_lines.push(new Line('A', 'A', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('B', 'B', 'subway-orange', '#FF6319', '#FFFFFF'));
-        N_lines.push(new Line('C', 'C', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('D', 'D', 'subway-orange', '#FF6319', '#FFFFFF'));
-        N_lines.push(new Line('E', 'E', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('F', 'F', 'subway-orange', '#FF6319', '#FFFFFF'));
-        N_lines.push(new Line('G', 'G', 'subway-light-green', '#6CBE45', '#FFFFFF'));
-        N_lines.push(new Line('J', 'J', 'subway-brown', '#996633', '#FFFFFF'));
-        N_lines.push(new Line('L', 'L', 'subway-silver', '#A7A9AC', '#FFFFFF'));
-        N_lines.push(new Line('M', 'M', 'subway-orange', '#FF6319', '#FFFFFF'));
-        N_lines.push(new Line('N', 'N', 'subway-yellow', '#FCCC0A', '#000000'));
-        N_lines.push(new Line('Q', 'Q', 'subway-yellow', '#FCCC0A', '#000000'));
-        N_lines.push(new Line('R', 'R', 'subway-yellow', '#FCCC0A', '#000000'));
-        N_lines.push(new Line('S-1', 'S', 'subway-gray', '#808183', '#FFFFFF'));
-        N_lines.push(new Line('S-2', 'S', 'subway-gray', '#808183', '#FFFFFF'));
-        N_lines.push(new Line('S-3', 'S', 'subway-gray', '#808183', '#FFFFFF'));
-        N_lines.push(new Line('Z', 'Z', 'subway-brown', '#996633', '#FFFFFF'));
-        N_lines.push(new Line('1', '1', 'subway-red', '#EE352E', '#FFFFFF'));
-        N_lines.push(new Line('2', '2', 'subway-red', '#EE352E', '#FFFFFF'));
-        N_lines.push(new Line('3', '3', 'subway-red', '#EE352E', '#FFFFFF'));
-        N_lines.push(new Line('4', '4', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('5', '5', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('6', '6', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('7', '7', 'subway-purple', '#B933AD', '#FFFFFF'));
-        N_lines.push(new Line('SIRR', 'SI', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('AirTrain JFK', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
-        N_lines.push(new Line('AirTrain LGA', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
-        N_lines.push(new Line('T', 'T', 'subway-turquoise', '#1E9DBF', '#FFFFFF'));
-        N_lines.push(new Line('BQX', 'BQX', 'subway-black', '#212121', '#FFFFFF'));
-        N_lines.push(new Line('S-4', 'S', 'subway-gray', '#808183', '#FFFFFF'));
-        N_lines.push(new Line('W', 'W', 'subway-yellow', '#FCCC0A', '#000000'));
-        N_lines.push(new Line('8', '8', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('9', '9', 'subway-red', '#EE352E', '#FFFFFF'));
-        N_lines.push(new Line('10', '10', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('11', '11', 'subway-purple', '#B933AD', '#FFFFFF'));
-        N_lines.push(new Line('12', '12', 'subway-green', '#00933C', '#FFFFFF'));
-        N_lines.push(new Line('13', '13', 'subway-red', '#EE352E', '#FFFFFF'));
-        N_lines.push(new Line('H', 'H', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('K', 'K', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('V', 'V', 'subway-orange', '#FF6319', '#FFFFFF'));
-        N_lines.push(new Line('JFK Express', '&#9992;', 'subway-turquoise', '#1E9DBF', '#FFFFFF'));
-        N_lines.push(new Line('MJ', 'MJ', 'subway-maroon', '#AB3F57', '#FFFFFF'));
-        N_lines.push(new Line('A-Euclid', 'A', 'subway-blue', '#0039A6', '#FFFFFF'));
-        N_lines.push(new Line('AirTrain JFK-Howard', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
-        N_lines.push(new Line('AirTrain JFK-Archer', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
-        N_lines.push(new Line('AirTrain JFK-Connectors', '&#9992;', 'subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('A', 'A', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('B', 'B', 'subway-line subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('C', 'C', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('D', 'D', 'subway-line subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('E', 'E', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('F', 'F', 'subway-line subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('G', 'G', 'subway-line subway-light-green', '#6CBE45', '#FFFFFF'));
+        N_lines.push(new Line('J', 'J', 'subway-line subway-brown', '#996633', '#FFFFFF'));
+        N_lines.push(new Line('L', 'L', 'subway-line subway-silver', '#A7A9AC', '#FFFFFF'));
+        N_lines.push(new Line('M', 'M', 'subway-line subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('N', 'N', 'subway-line subway-yellow', '#FCCC0A', '#000000'));
+        N_lines.push(new Line('Q', 'Q', 'subway-line subway-yellow', '#FCCC0A', '#000000'));
+        N_lines.push(new Line('R', 'R', 'subway-line subway-yellow', '#FCCC0A', '#000000'));
+        N_lines.push(new Line('S-1', 'S', 'subway-line subway-gray', '#808183', '#FFFFFF'));
+        N_lines.push(new Line('S-2', 'S', 'subway-line subway-gray', '#808183', '#FFFFFF'));
+        N_lines.push(new Line('S-3', 'S', 'subway-line subway-gray', '#808183', '#FFFFFF'));
+        N_lines.push(new Line('Z', 'Z', 'subway-line subway-brown', '#996633', '#FFFFFF'));
+        N_lines.push(new Line('1', '1', 'subway-line subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('2', '2', 'subway-line subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('3', '3', 'subway-line subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('4', '4', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('5', '5', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('6', '6', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('7', '7', 'subway-line subway-purple', '#B933AD', '#FFFFFF'));
+        N_lines.push(new Line('SIRR', 'SI', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('AirTrain JFK', '&#9992;', 'subway-line subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('AirTrain LGA', '&#9992;', 'subway-line subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('T', 'T', 'subway-line subway-turquoise', '#1E9DBF', '#FFFFFF'));
+        N_lines.push(new Line('BQX', 'BQX', 'subway-line subway-black', '#212121', '#FFFFFF'));
+        N_lines.push(new Line('S-4', 'S', 'subway-line subway-gray', '#808183', '#FFFFFF'));
+        N_lines.push(new Line('W', 'W', 'subway-line subway-yellow', '#FCCC0A', '#000000'));
+        N_lines.push(new Line('8', '8', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('9', '9', 'subway-line subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('10', '10', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('11', '11', 'subway-line subway-purple', '#B933AD', '#FFFFFF'));
+        N_lines.push(new Line('12', '12', 'subway-line subway-green', '#00933C', '#FFFFFF'));
+        N_lines.push(new Line('13', '13', 'subway-line subway-red', '#EE352E', '#FFFFFF'));
+        N_lines.push(new Line('H', 'H', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('K', 'K', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('V', 'V', 'subway-line subway-orange', '#FF6319', '#FFFFFF'));
+        N_lines.push(new Line('JFK Express', '&#9992;', 'subway-line subway-turquoise', '#1E9DBF', '#FFFFFF'));
+        N_lines.push(new Line('MJ', 'MJ', 'subway-line subway-maroon', '#AB3F57', '#FFFFFF'));
+        N_lines.push(new Line('A-Euclid', 'A', 'subway-line subway-blue', '#0039A6', '#FFFFFF'));
+        N_lines.push(new Line('AirTrain JFK-Howard', '&#9992;', 'subway-line subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('AirTrain JFK-Archer', '&#9992;', 'subway-line subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('AirTrain JFK-Connectors', '&#9992;', 'subway-line subway-light-yellow', '#FFF200', '#000000'));
+        N_lines.push(new Line('TriboroRX', 'TriboroRX', 'subway-line-long subway-yellow', '#FCCC0A', '#000000'));
         
         
         find_line_by_name('A-Euclid').branch = true;
@@ -497,7 +498,7 @@
         N_line_groups.push(new LineGroup('G', [find_line_by_name('G').id]));
         N_line_groups.push(new LineGroup('JZ', [find_line_by_name('J').id, find_line_by_name('Z').id]));
         N_line_groups.push(new LineGroup('L', [find_line_by_name('L').id]));
-        N_line_groups.push(new LineGroup('NQR', [find_line_by_name('N').id, find_line_by_name('Q').id, find_line_by_name('R').id, find_line_by_name('W').id]));
+        N_line_groups.push(new LineGroup('NQR', [find_line_by_name('N').id, find_line_by_name('Q').id, find_line_by_name('R').id, find_line_by_name('W').id, find_line_by_name('TriboroRX').id]));
         N_line_groups.push(new LineGroup('Shuttles', [find_line_by_name('S-1').id, find_line_by_name('S-2').id, find_line_by_name('S-3').id, find_line_by_name('S-4').id]));
         N_line_groups.push(new LineGroup('123', [find_line_by_name('1').id, find_line_by_name('2').id, find_line_by_name('3').id, find_line_by_name('9').id, find_line_by_name('13').id]));
         N_line_groups.push(new LineGroup('456', [find_line_by_name('4').id, find_line_by_name('5').id, find_line_by_name('6').id, find_line_by_name('8').id, find_line_by_name('10').id, find_line_by_name('12').id]));

@@ -6,6 +6,12 @@ function calculate_ridership(latlng) {
 
     var voxel_i = Math.round((latlng.lat - LAT_MIN)/VOXELS_RES_LAT);
     var voxel_j = Math.round((latlng.lng - LNG_MIN)/VOXELS_RES_LNG);
+    
+    if (voxel_i < 2 || voxel_i > VOXELS_DIM - 2 || voxel_j < 2 || voxel_j > VOXELS_DIM - 2) {
+        // This is outside our ridership estimate area.
+        // For now, just return 0.
+        return 0.0;
+    }
 
     total_ridership += demand[voxel_i][voxel_j+2];
 

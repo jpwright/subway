@@ -43,7 +43,7 @@ class Station {
             var line = this.lines[i];
             var html_css_combo = N_lines[line].html + ' ' + N_lines[line].css;
             if (!is_in_array(html_css_combo, html_css_combos)) {
-                station_content += '<div id="'+this.id.toString()+":"+line.toString()+'" class="tooltip subway-deletable subway-line '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div><span class="tooltiptext">Click to delete</span></div>';
+                station_content += '<div id="'+this.id.toString()+":"+line.toString()+'" class="tooltip subway-deletable '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div><span class="tooltiptext">Click to delete</span></div>';
                 html_css_combos.push(html_css_combo);
             }
         }
@@ -160,9 +160,12 @@ class Station {
     }
 }
 
-function geocode_to_station(geo, line) {
+function geocode_to_station(geo, line, ridership_add, ridership_mult) {
 
-    var ridership = calculate_ridership(geo.latlng);
+    var ridership = (calculate_ridership(geo.latlng) * ridership_mult) + ridership_add;
+    
+    // Add some noise
+    ridership *= (Math.random() - 0.5)*0.05 + 1.0;
 
     var N_station = new Station(geo.latlng.lat, geo.latlng.lng, geo.name, geo.info, ridership);
     N_stations[N_station.id] = N_station;

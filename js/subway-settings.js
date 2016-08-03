@@ -36,7 +36,7 @@ var VOXELS_TOTAL = VOXELS_DIM * VOXELS_DIM;
 // Geocoding parameters
 var ENC_NEIGHBORHOODS_ALWAYS_LABEL = ['Astoria'];
 var ENC_NEIGHBORHOODS_ONLY_LABEL = ['Roosevelt Island', 'Governors Island', 'Randall\'s Island', 'North Brother Island', 'South Brother Island', 'Rikers Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
-var ENC_LANDMARKS_ONLY_LABEL = ['Ellis Island', 'Liberty Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];
+var ENC_LANDMARKS_ONLY_LABEL = ['Ellis Island', 'Liberty Island', 'Governors Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];
 
 var TRANSFER_BUTTON_DEFAULT = "Start Transfer"
 var TRANSFER_BUTTON_START = "Click a station"

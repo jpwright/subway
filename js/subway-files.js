@@ -36,11 +36,20 @@ function load_game_json(data) {
         N_lines[d["id"]].draw_map = d["draw_map"];
     }
 
+    var fix_corrupt_game = false;
+    
     for (var i = 0; i < data["stations"].length; i++) {
         var d = data["stations"][i];
 
         var station = new Station(d["lat"], d["lng"], d["name"], d["info"], d["riders"]);
         station.lines = d["lines"];
+        if (!fix_corrupt_game) {
+            for (var j = 0; j < station.lines.length; j++) {
+                if (!is_in_array(station.id, N_lines[station.lines[j]].stations)) {
+                    fix_corrupt_game = true;
+                }
+            }
+        }
         //station.drawmaps = d["drawmaps"];
         N_stations[station.id] = station;
 
@@ -52,13 +61,15 @@ function load_game_json(data) {
     }
 
     // Correct line array in each station in case of corrupted save game
-    for (var i = 0; i < N_stations.length; i++) {
-        N_stations[i].lines = [];
-    }
-    for (var j = 0; j < N_lines.length; j++) {
-        var line_stations  = N_lines[j].stations;
-        for (var k = 0; k < line_stations.length; k++) {
-            N_stations[line_stations[k]].lines.push(N_lines[j].id);
+    if (fix_corrupt_game) {
+        for (var i = 0; i < N_stations.length; i++) {
+            N_stations[i].lines = [];
+        }
+        for (var j = 0; j < N_lines.length; j++) {
+            var line_stations  = N_lines[j].stations;
+            for (var k = 0; k < line_stations.length; k++) {
+                N_stations[line_stations[k]].lines.push(N_lines[j].id);
+            }
         }
     }
 

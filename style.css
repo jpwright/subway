@@ -111,7 +111,37 @@ textarea.station-name-edit {
     padding: 4px;
     margin: 4px;
     border: 1px solid #999;
+    vertical-align: top;
 }
+
+.subway-line-long {
+    -webkit-border-radius: 14px;
+    -moz-border-radius: 14px;
+    border-radius: 14px;
+    border: 2px solid rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    padding: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin-top: 14px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-bottom: -12px;
+    height: 28px;
+    top: -12px;
+}
+
+
+.subway-line-long .content {
+    position: relative;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
 
 .subway-line {
     -webkit-border-radius: 50%;
@@ -154,7 +184,7 @@ textarea.station-name-edit {
     position: relative;
     display: inline-block;
     margin-top: -2px;
-    top: 2px;
+    top: 4px;
 }
 
 .subway-line-mini .height_fix {
@@ -168,6 +198,37 @@ textarea.station-name-edit {
     width: 100%;
     text-align: center;
     margin-top: -4px; /* Note, this must be half the font size */
+}
+
+.subway-line-mini.subway-line-long {
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
+    box-sizing: border-box;
+    padding: 4px;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-bottom: -5px;
+    height: 14px;
+    width: auto;
+    top: 1px;
+}
+
+.subway-line-mini.subway-line-long .height_fix {
+    margin-top: 0;
+}
+
+.subway-line-mini.subway-line-long .content {
+    position: relative;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+    top: -3px;
 }
 
 .subway-clickable {
@@ -395,7 +456,7 @@ div.game-start-greyed {
 }
 
 #option-section-route {
-    height: 200px;
+    min-height: 200px;
     max-height: 30%;
     display: block;
     overflow: hidden;
@@ -407,7 +468,7 @@ div.game-start-greyed {
     bottom: 0px;
     width: 100%;
     max-height: 35%;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #game-outcome {
