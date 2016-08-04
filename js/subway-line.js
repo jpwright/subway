@@ -151,15 +151,10 @@ class Line {
                             }
 
                             var station_buffer = [];
-                            console.log(relevant_line.stations);
 
                             for (var k = start_index; (k >= (start_index - delta) && k <= (start_index + delta)); k += dir) {
 
                                 station_buffer.push(relevant_line.stations[k]);
-
-                                if (k == -1) {
-                                    console.log("Debugme");
-                                }
 
                                 var station_is_shared_between_lines = is_in_array(this.id, N_stations[relevant_line.stations[k]].lines);
                                 var station_is_close_enough_on_impacted_line = Math.abs(i - this.stations.indexOf(relevant_line.stations[k])) <= SHARED_STRETCH_THRESHOLD;

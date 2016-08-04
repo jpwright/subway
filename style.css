@@ -102,7 +102,7 @@ textarea.station-name-edit {
 }
 
 .subway-lines {
-    
+    overflow: visible;
 }
 
 .subway-line-group {
@@ -112,6 +112,7 @@ textarea.station-name-edit {
     margin: 4px;
     border: 1px solid #999;
     vertical-align: top;
+    overflow: visible;
 }
 
 .subway-line-long {
@@ -445,7 +446,8 @@ div.game-start-greyed {
     color: white;
     z-index: 5000;
     max-height: 100%;
-    overflow: hidden;
+    overflow-y: hidden;
+    overflow-x: visible;
     width: 25%;
 }
 
@@ -453,6 +455,7 @@ div.game-start-greyed {
     height: 300px;
     max-height: 35%;
     overflow-y: auto;
+    overflow-x: visible;
 }
 
 #option-section-route {
@@ -530,6 +533,13 @@ div.game-start-greyed {
     bottom: 100%;
     left: 50%; 
     margin-left: -50px; /* Use half of the width (120/2 = 60), to center the tooltip */
+}
+
+.tooltip .tooltiptext.info {
+    font-size: 0.9em;
+    color: #fff;
+    width: 80px;
+    margin-left: -40px;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
