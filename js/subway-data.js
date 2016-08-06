@@ -1,5 +1,6 @@
-function calculate_ridership(latlng) {
+function calculate_ridership(station_id, instruction) {
 
+    var latlng = N_stations[station_id].marker.getLatLng();
     var total_ridership = 0;
 
     // New method: Voxels
@@ -12,26 +13,91 @@ function calculate_ridership(latlng) {
         // For now, just return 0.
         return 0.0;
     }
-
-    total_ridership += demand[voxel_i][voxel_j+2];
-
-    total_ridership += demand[voxel_i+1][voxel_j+1];
-    total_ridership += demand[voxel_i][voxel_j+1];
-    total_ridership += demand[voxel_i-1][voxel_j+1];
-
-    total_ridership += demand[voxel_i+2][voxel_j];
-    total_ridership += demand[voxel_i+1][voxel_j];
-    total_ridership += demand[voxel_i][voxel_j];
-    total_ridership += demand[voxel_i-1][voxel_j];
-    total_ridership += demand[voxel_i-2][voxel_j];
-
-    total_ridership += demand[voxel_i+1][voxel_j-1];
-    total_ridership += demand[voxel_i][voxel_j-1];
-    total_ridership += demand[voxel_i-1][voxel_j-1];
-
-    total_ridership += demand[voxel_i][voxel_j-2];
-
-    return total_ridership;
+    
+    var kernels = [[0,2],[-1,1],[0,1],[1,1],[-2,0],[-1,0],[0,0],[1,0],[2,0],[-1,-1],[0,-1],[1,-1],[0,-2]];
+    var stations_to_check = [];
+    
+    for (var i = 0; i < kernels.length; i++) {
+    
+        var k = kernels[i];
+        var scale = 1.0;
+        var demand_i = demand[voxel_i+k[0]][voxel_j+k[1]];
+        var dsl_i = N_demand_station_links[voxel_i+k[0]];
+        if (typeof dsl_i == "undefined") {
+            N_demand_station_links[voxel_i+k[0]] = {};
+            dsl_i = [];
+        }
+        var dsl_j = dsl_i[voxel_j+k[1]];
+        if (typeof dsl_j == "undefined") {
+            switch (instruction) {
+                case RIDERSHIP_ADD:
+                    N_demand_station_links[voxel_i+k[0]][voxel_j+k[1]] = [station_id];
+                    dsl_j = [station_id];
+                    break;
+                default:
+                    N_demand_station_links[voxel_i+k[0]][voxel_j+k[1]] = [];
+                    dsl_j = [];
+                    break;
+            }
+        } else {
+            switch (instruction) {
+                case RIDERSHIP_ADD:
+                    N_demand_station_links[voxel_i+k[0]][voxel_j+k[1]].push(station_id);
+                    //dsl_j.push(station_id);
+                    break;
+                case RIDERSHIP_DELETE:
+                    var voxel_station_index = N_demand_station_links[voxel_i+k[0]][voxel_j+k[1]].indexOf(station_id);
+                    if (voxel_station_index > -1) {
+                        N_demand_station_links[voxel_i+k[0]][voxel_j+k[1]].splice(voxel_station_index, 1);
+                        //dsl_j.splice(voxel_station_index, 1);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+        }
+        scale = dsl_j.length;
+        total_ridership += demand_i / scale;
+        
+        if (instruction != RIDERSHIP_NOCHANGE) {
+            for (var j = 0; j < dsl_j.length; j++) {
+                if (!is_in_array(dsl_j[j], stations_to_check) && dsl_j[j] != station_id) {
+                    stations_to_check.push(dsl_j[j]);
+                }
+            }
+        }
+        
+        
+    }
+    
+    for (var i = 0; i < stations_to_check.length; i++) {
+        var station_id_i = stations_to_check[i];
+        if (N_stations[station_id_i].active) {
+            calculate_ridership(station_id_i, RIDERSHIP_NOCHANGE);
+            // Update popup for new ridership
+            N_stations[station_id_i].generate_popup();
+        }
+    }
+    
+    // Global scaling factor
+    total_ridership *= 1.1;
+    
+    // Borough employment scaling
+    if (N_stations[station_id].borough in EMPLOYMENT_BY_BOROUGH_MODIFIERS) {
+        total_ridership += (total_ridership * PERCENTAGE_EMPLOYMENT_TRIPS) * Math.sqrt(EMPLOYMENT_BY_BOROUGH_MODIFIERS[N_stations[station_id].borough]);
+    }
+    
+    // Bonus for extra lines
+    // TODO account for in-system transfers
+    var num_accessible_lines = N_stations[station_id].lines.length;
+    total_ridership *= Math.log(num_accessible_lines) + 1.0;
+    
+    // Add some noise!
+    total_ridership *= (Math.random() - 0.5)*0.05 + 1.0;
+    
+    N_stations[station_id].riders = total_ridership;
+    N_stations[station_id].generate_popup();
     
 }
 
@@ -42,17 +108,27 @@ function calculate_total_ridership() {
             r += N_stations[i].riders;
     }
     
-    var rs = r * 1.69375;
+    console.log("Ridership = "+r.toString());
+    console.log("Platforms = "+number_of_active_platforms().toString());
+    
+    //var rs = r * 1.69375;
+    var rs = r;
     var riders_millions = rs / 1000000.0;
     
     $('#system-ridership').text(Number(riders_millions).toFixed(2).toString() + " million");
 
-    var mc_cost = number_of_active_stations()*19859.5063025/r;
+    var alpha = 6787.76; // This is derived from $2.75 = (platforms/riders)^2 / alpha
+    var mc_cost = Math.pow(number_of_active_platforms()/riders_millions, 2) / alpha;
     $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
     
-    var rating = 41.4634146341 * riders_millions / mc_cost;
+    var gamma = 0.0992;
+    var rating = Math.pow(riders_millions, 2) * Math.sqrt(number_of_active_platforms());
+    console.log(rating);
+    rating *= gamma;
+    
     var letter_grade = '';
     
+    console.log("Rating = "+rating.toString());
     if (rating >= 97) {
         letter_grade = 'A+';
     } else if (rating >= 93) {

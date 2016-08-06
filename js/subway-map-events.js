@@ -13,7 +13,30 @@ function create_station_marker(id, latlng_orig) {
 
             var different_stations = transfer_origin != transfer_end;
             var stations_exist = (N_stations[transfer_origin].active && N_stations[transfer_end]);
-            if (different_stations && stations_exist) {
+            var origin_latlng = N_stations[transfer_origin].marker.getLatLng();
+            var end_latlng = N_stations[transfer_end].marker.getLatLng();
+            var point1 = {
+            "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [origin_latlng.lat, origin_latlng.lng]
+                }
+            };
+            var point2 = {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [end_latlng.lat, end_latlng.lng]
+                }
+            };
+            var points = {
+                "type": "FeatureCollection",
+                "features": [point1, point2]
+            };
+            var distance = turf.distance(point1, point2, "miles");
+            if (different_stations && stations_exist && distance < 0.5) {
                 var transfer = new Transfer(transfer_origin, transfer_end);
                 transfer.draw();
                 N_transfers.push(transfer);

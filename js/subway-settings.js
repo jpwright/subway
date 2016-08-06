@@ -41,3 +41,13 @@ var ENC_LANDMARKS_ONLY_LABEL = ['Ellis Island', 'Liberty Island', 'Governors Isl
 var TRANSFER_BUTTON_DEFAULT = "Start Transfer"
 var TRANSFER_BUTTON_START = "Click a station"
 var TRANSFER_BUTTON_END = "Click another station"
+
+// Instructions for calculate_ridership function
+var RIDERSHIP_ADD = 0;
+var RIDERSHIP_NOCHANGE = 1;
+var RIDERSHIP_DELETE = 2;
+
+// Employment modifiers
+// Data from NYCEDC
+var PERCENTAGE_EMPLOYMENT_TRIPS = 0.15;
+var EMPLOYMENT_BY_BOROUGH_MODIFIERS = {"Staten Island": 1.0, "Queens": 5.551, "Brooklyn": 5.606, "Bronx": 2.476, "Manhattan": 22.189}

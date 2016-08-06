@@ -112,9 +112,33 @@ function number_of_active_stations() {
     return n;
 }
 
+function number_of_active_platforms() {
+    var n = 0;
+    for (var i = 0; i < N_stations.length; i++) {
+        if (N_stations[i].active) {
+            n += N_stations[i].lines.length;
+        }
+    }
+    return n;
+}
+
 function clear_debug_layer() {
 
     map.removeLayer(debug_layer);
     debug_layer = L.featureGroup();
     map.addLayer(debug_layer);
+}
+
+function recalculate_all_ridership(instruction) {
+    for (var i = 0; i < N_stations.length; i++) {
+        calculate_ridership(i, instruction);
+    }
+    
+}
+
+function futz_boroughs() {
+    for (var i = 0; i < N_stations.length; i++) {
+        var station_info = N_stations[i].info;
+        N_stations[i].borough = station_info.split("<br />")[0];
+    }
 }

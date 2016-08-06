@@ -264,9 +264,12 @@
     var tract_nearby = {};
 
     var demand = [];
+    var N_demand_station_links = {};
+    
     $.getJSON( "json/demand.json", function( data ) {
         demand = data;
     });
+    
     
     var transfer_state = 0;
     var transfer_origin = -1;
@@ -409,7 +412,7 @@
         if (N_stations != null) {
             // Reset the map
             for (var i = 0; i < N_stations.length; i++) {
-                N_stations[i].delete();
+                N_stations[i].del();
             }
         }
         
@@ -509,6 +512,10 @@
         N_line_groups.push(new LineGroup('BQX', [find_line_by_name('BQX').id]));
         N_line_groups.push(new LineGroup('Maroon', [find_line_by_name('MJ').id]));
         
+        // Initialize demand matrix
+        N_demand_station_links = {};
+        N_demand_station_links[0] = {};
+        N_demand_station_links[0][0] = [];
         
 
     }

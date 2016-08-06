@@ -37,6 +37,7 @@ function load_game_json(data) {
     }
 
     var fix_corrupt_game = false;
+    var fix_boroughs = false;
     
     for (var i = 0; i < data["stations"].length; i++) {
         var d = data["stations"][i];
@@ -48,6 +49,11 @@ function load_game_json(data) {
                 if (!is_in_array(station.id, N_lines[station.lines[j]].stations)) {
                     fix_corrupt_game = true;
                 }
+            }
+        }
+        if (!fix_boroughs) {
+            if (station.borough == "None") {
+                fix_boroughs = true;
             }
         }
         //station.drawmaps = d["drawmaps"];
@@ -72,6 +78,10 @@ function load_game_json(data) {
             }
         }
     }
+    
+    if (fix_boroughs) {
+        futz_boroughs();
+    }
 
     for (var k = 0; k < N_lines.length; k++) {
         N_lines[k].generate_draw_map();
@@ -90,13 +100,19 @@ function load_game_json(data) {
 
 
     station_layer.bringToFront();
-
     generate_route_diagram(N_active_line);
+    
+    if ("srm" in data) {
+        N_demand_station_links = data["srm"];
+    } else {
+        recalculate_all_ridership(RIDERSHIP_ADD);
+    }
+    
     calculate_total_ridership();
 }
 
 function save_game_json() {
-    var json = {"lines": [], "stations": [], "transfers": []}
+    var json = {"lines": [], "stations": [], "transfers": [], "srm": N_demand_station_links}
 
     for (var i = 0; i < N_lines.length; i++) {
         json["lines"].push(N_lines[i].to_json());

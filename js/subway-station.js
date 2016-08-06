@@ -1,11 +1,13 @@
 class Station {
-    constructor(lat, lng, name, info, riders) {
+    constructor(lat, lng, name, info) {
         this.name = name;
         this.info = info;
-        this.riders = riders;
+        this.borough = "None";
+        this.riders = 0.0;
 
         this.lines = []; // Lines that contain this station.
         //this.drawmaps = []; // Lines that contain this station within its draw map.
+        this.transfers = [];
 
         this.id = station_id_generator.generate();
 
@@ -127,19 +129,9 @@ class Station {
                 transfer.undraw();
             }
         }
-
-        /*
-        // Redraw lines
-        for (var j = 0; j < impacted_lines.length; j++) {
-            N_lines[impacted_lines[j]].generate_draw_map();
-            N_lines[impacted_lines[j]].generate_control_points();
-        }
-        for (var j = 0; j < impacted_lines.length; j++) {
-            N_lines[impacted_lines[j]].draw();
-        }
-
-        station_layer.bringToFront();
-        */
+        
+        // Trigger ridership recalculation for nearby stations
+        calculate_ridership(this.id, RIDERSHIP_DELETE);
 
     }
 
@@ -160,18 +152,19 @@ class Station {
     }
 }
 
-function geocode_to_station(geo, line, ridership_add, ridership_mult) {
+function geocode_to_station(geo, line, borough) {
 
-    var ridership = (calculate_ridership(geo.latlng) * ridership_mult) + ridership_add;
     
-    // Add some noise
-    ridership *= (Math.random() - 0.5)*0.05 + 1.0;
 
-    var N_station = new Station(geo.latlng.lat, geo.latlng.lng, geo.name, geo.info, ridership);
+    var N_station = new Station(geo.latlng.lat, geo.latlng.lng, geo.name, geo.info);
+    
     N_stations[N_station.id] = N_station;
     var new_index = N_active_line.insert_station(N_station.id);
+    
+    N_station.borough = borough;
 
-    N_station.generate_popup();
+    calculate_ridership(N_station.id, RIDERSHIP_ADD);
+    
     N_station.marker.openPopup();
 
     var impacted_lines = [N_active_line.id];
@@ -197,6 +190,7 @@ function geocode_to_station(geo, line, ridership_add, ridership_mult) {
 
     station_layer.bringToFront();
     generate_route_diagram(line);
+    
     calculate_total_ridership();
 
 }

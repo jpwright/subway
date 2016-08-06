@@ -116,7 +116,7 @@ jsonfile.readFile(input_file, function(err, data) {
         
         
 
-        jsonfile.writeFile('demand_equalized.json', demand, {spaces: 2}, function(err) {
+        jsonfile.writeFile('demand.json', demand, {spaces: 2}, function(err) {
             console.error(err);
         });
 

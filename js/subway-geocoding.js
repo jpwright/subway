@@ -43,6 +43,8 @@ class Geocoder {
 
             var enc_landmarks = [];
             var neighborhood_in_station_name = false;
+            
+            var borough = "None";
 
             var neighborhood_layer = leafletPip.pointInLayer([geo.latlng.lng, geo.latlng.lat], neighborhoods, true);
             if (neighborhood_layer.length > 0) {
@@ -52,6 +54,7 @@ class Geocoder {
 
             if (enc_neighborhoods.length > 0) {
                 var enc_borough = enc_boroughs[0];
+                borough = enc_borough;
                 var enc_neighborhood = enc_neighborhoods[0];
 
                 if (enc_borough != "Manhattan" && geo.name.match(/\d/g)) {
@@ -96,7 +99,7 @@ class Geocoder {
                 }
             }
 
-            geocode_to_station(geo, line, ridership_add, ridership_mult)
+            geocode_to_station(geo, line, borough)
         });
     }
 }
