@@ -37,6 +37,7 @@ var VOXELS_TOTAL = VOXELS_DIM * VOXELS_DIM;
 var ENC_NEIGHBORHOODS_ALWAYS_LABEL = ['Astoria'];
 var ENC_NEIGHBORHOODS_ONLY_LABEL = ['Roosevelt Island', 'Governors Island', 'Randall\'s Island', 'North Brother Island', 'South Brother Island', 'Rikers Island', 'John F. Kennedy International Airport', 'Floyd Bennett Field', 'LaGuardia Airport'];
 var ENC_LANDMARKS_ONLY_LABEL = ['Ellis Island', 'Liberty Island', 'Governors Island', 'Grand Army Plaza', 'Bartel Pritchard Square', 'Mets-Willets Point'];
+ENC_LANDMARKS_NEVER_LABEL = ['JFK Airport', 'LaGuardia Aiport']; // These are covered by the neighborhood name
 
 var TRANSFER_BUTTON_DEFAULT = "Start Transfer"
 var TRANSFER_BUTTON_START = "Click a station"
@@ -51,3 +52,9 @@ var RIDERSHIP_DELETE = 2;
 // Data from NYCEDC
 var PERCENTAGE_EMPLOYMENT_TRIPS = 0.15;
 var EMPLOYMENT_BY_BOROUGH_MODIFIERS = {"Staten Island": 1.0, "Queens": 5.551, "Brooklyn": 5.606, "Bronx": 2.476, "Manhattan": 22.189}
+
+// Transit modifiers
+var TRANSIT_MODIFIERS = {
+    "John F. Kennedy International Airport": 35000,
+    "LaGuardia Airport": 25000
+}

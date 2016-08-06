@@ -45,6 +45,7 @@ class Geocoder {
             var neighborhood_in_station_name = false;
             
             var borough = "None";
+            var neighborhood = "None";
 
             var neighborhood_layer = leafletPip.pointInLayer([geo.latlng.lng, geo.latlng.lat], neighborhoods, true);
             if (neighborhood_layer.length > 0) {
@@ -56,6 +57,7 @@ class Geocoder {
                 var enc_borough = enc_boroughs[0];
                 borough = enc_borough;
                 var enc_neighborhood = enc_neighborhoods[0];
+                neighborhood = enc_neighborhood;
 
                 if (enc_borough != "Manhattan" && geo.name.match(/\d/g)) {
                     geo.name = enc_neighborhood + ' - ' + geo.name;
@@ -87,19 +89,15 @@ class Geocoder {
                 enc_landmarks.push(landmark_layer[0].feature.properties);
             }
             if (enc_landmarks.length > 0) {
-                geo.name = geo.name + ' - ' + enc_landmarks[0].name;
-                if (ENC_LANDMARKS_ONLY_LABEL.indexOf(enc_landmarks[0].name) != -1) {
-                    geo.name = enc_landmarks[0].name;
-                }
-                if ("a" in enc_landmarks[0]) {
-                    ridership_add += enc_landmarks[0].a;
-                }
-                if ("m" in enc_landmarks[0]) {
-                    ridership_mult *= enc_landmarks[0].m;
+                if (!is_in_array(enc_landmarks[0].name, ENC_LANDMARKS_NEVER_LABEL)) {
+                    geo.name = geo.name + ' - ' + enc_landmarks[0].name;
+                    if (ENC_LANDMARKS_ONLY_LABEL.indexOf(enc_landmarks[0].name) != -1) {
+                        geo.name = enc_landmarks[0].name;
+                    }
                 }
             }
 
-            geocode_to_station(geo, line, borough)
+            geocode_to_station(geo, line, borough, neighborhood)
         });
     }
 }

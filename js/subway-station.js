@@ -3,6 +3,7 @@ class Station {
         this.name = name;
         this.info = info;
         this.borough = "None";
+        this.neighborhood = "None";
         this.riders = 0.0;
 
         this.lines = []; // Lines that contain this station.
@@ -152,7 +153,7 @@ class Station {
     }
 }
 
-function geocode_to_station(geo, line, borough) {
+function geocode_to_station(geo, line, borough, neighborhood) {
 
     
 
@@ -162,6 +163,7 @@ function geocode_to_station(geo, line, borough) {
     var new_index = N_active_line.insert_station(N_station.id);
     
     N_station.borough = borough;
+    N_station.neighborhood = neighborhood;
 
     calculate_ridership(N_station.id, RIDERSHIP_ADD);
     

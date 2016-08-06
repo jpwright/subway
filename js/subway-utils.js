@@ -138,7 +138,8 @@ function recalculate_all_ridership(instruction) {
 
 function futz_boroughs() {
     for (var i = 0; i < N_stations.length; i++) {
-        var station_info = N_stations[i].info;
-        N_stations[i].borough = station_info.split("<br />")[0];
+        var station_info = N_stations[i].info.split("<br />");
+        N_stations[i].borough = station_info[0];
+        N_stations[i].neighborhood = station_info[1];
     }
 }
