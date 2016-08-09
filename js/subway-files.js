@@ -102,17 +102,13 @@ function load_game_json(data) {
     station_layer.bringToFront();
     generate_route_diagram(N_active_line);
     
-    if ("srm" in data) {
-        N_demand_station_links = data["srm"];
-    } else {
-        recalculate_all_ridership(RIDERSHIP_ADD);
-    }
+    recalculate_all_ridership(RIDERSHIP_ADD);
     
     calculate_total_ridership();
 }
 
 function save_game_json() {
-    var json = {"lines": [], "stations": [], "transfers": [], "srm": N_demand_station_links}
+    var json = {"lines": [], "stations": [], "transfers": []}
 
     for (var i = 0; i < N_lines.length; i++) {
         json["lines"].push(N_lines[i].to_json());

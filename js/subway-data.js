@@ -81,7 +81,7 @@ function calculate_ridership(station_id, instruction) {
     }
     
     // Global scaling factor
-    total_ridership *= 1.1;
+    total_ridership *= 1.0;
     
     // Borough employment scaling
     if (N_stations[station_id].borough in EMPLOYMENT_BY_BOROUGH_MODIFIERS) {
@@ -117,18 +117,29 @@ function calculate_total_ridership() {
     
     $('#system-ridership').text(Number(riders_millions).toFixed(2).toString() + " million");
 
-    var alpha = 6787.76; // This is derived from $2.75 = (platforms/riders)^2 / alpha
+    var alpha = 6651.72; // This is derived from $2.75 = (platforms/riders)^2 / alpha
     var mc_cost = Math.pow(number_of_active_platforms()/riders_millions, 2) / alpha;
     $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
     
-    var gamma = 0.0992;
-    var rating = Math.pow(riders_millions, 2) * Math.sqrt(number_of_active_platforms());
-    console.log(rating);
-    rating *= gamma;
+    var beta = 2.0;
+    var gamma = 5.0;
+    var zeta = 10000.0;
+    var delta = 0.0;
+    var psi = 0.0;
+    var omega = 10.0;
     
+    var f1 =  beta*(riders_millions + psi);
+    var f2 =  zeta*(riders_millions + psi)/(gamma*(number_of_active_platforms() + number_of_active_stations()) + omega);
+    var rating = f1 + f2;
+    console.log("Pop score = "+f1.toString()+", Station score = "+f2.toString());
+    console.log(rating);
+    
+    var sigma = 4.15602;
+    rating *= sigma;
+    console.log(rating);
     var letter_grade = '';
     
-    console.log("Rating = "+rating.toString());
+    //console.log("Rating = "+rating.toString());
     if (rating >= 97) {
         letter_grade = 'A+';
     } else if (rating >= 93) {

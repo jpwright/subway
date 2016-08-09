@@ -1,0 +1,554 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.leaflet-tooltip {
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 5px;
+    text-align: center;
+    width: 160px;
+}
+
+.tooltip-hide {
+    display: none;
+}
+
+.station-popup {
+    width: 250px;
+    bottom: 0px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.station-content {
+    padding: 5px;
+}
+
+.station-popup .leaflet-popup-content {
+    margin: 0px;
+    padding-top: 10px;
+}
+
+.station-popup .leaflet-popup-close-button {
+    margin-top: 12px;
+}
+
+.station-popup .leaflet-popup-content-wrapper {
+    border-radius: 0px;
+    padding: 0px;
+}
+
+.station-popup .leaflet-popup-content-wrapper, .station-popup .leaflet-popup-tip {
+    background: black;
+    color: white;
+}
+
+.station-name {
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 5px;
+    border-top: 5px solid white;
+}
+
+textarea.station-name-edit {
+    background-color: black;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 1em;
+    height: 1em;
+    width: 200px;
+    margin: 0px;
+    padding: 5px;
+}
+
+.station-info {
+    font-size: 1em;
+}
+
+.station-buttons {
+}
+
+.station-content-button {
+    cursor: pointer;
+    display: inline-block;
+    margin: 2px;
+    padding: 5px;
+    background-color: #333333;
+}
+
+.station-delete {
+    float: right;
+}
+
+.station-build {
+    float: right;
+}
+
+.station-transfer {
+    float: right;
+    text-align: center;
+}
+
+.subway-lines {
+    overflow: visible;
+}
+
+.subway-line-group {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid #999;
+    vertical-align: top;
+    overflow: visible;
+}
+
+.subway-line-long {
+    -webkit-border-radius: 14px;
+    -moz-border-radius: 14px;
+    border-radius: 14px;
+    border: 2px solid rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    padding: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin-top: 14px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-bottom: -12px;
+    height: 28px;
+    top: -12px;
+}
+
+
+.subway-line-long .content {
+    position: relative;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
+
+.subway-line {
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    box-sizing: border-box;
+    width: 28px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin: 2px;
+}
+
+.subway-line .height_fix {
+    margin-top: 100%;
+}
+.subway-line .content {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    margin-top: -6px; /* Note, this must be half the font size */
+}
+
+.subway-line-mini {
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    box-sizing: border-box;
+    width: 14px;
+    padding: 4px;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin-top: -2px;
+    top: 4px;
+}
+
+.subway-line-mini .height_fix {
+    margin-top: 100%;
+}
+.subway-line-mini .content {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    margin-top: -4px; /* Note, this must be half the font size */
+}
+
+.subway-line-mini.subway-line-long {
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
+    box-sizing: border-box;
+    padding: 4px;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-bottom: -5px;
+    height: 14px;
+    width: auto;
+    top: 1px;
+}
+
+.subway-line-mini.subway-line-long .height_fix {
+    margin-top: 0;
+}
+
+.subway-line-mini.subway-line-long .content {
+    position: relative;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+    top: -3px;
+}
+
+.subway-clickable {
+    cursor: pointer;
+}
+
+.subway-selected {
+    border: 2px solid black;
+}
+
+.subway-blue {
+    background-color: #0039A6;
+}
+
+.subway-orange {
+    background-color: #FF6319;
+}
+
+.subway-light-green {
+    background-color: #6CBE45;
+}
+
+.subway-brown {
+    background-color: #996633;
+}
+
+.subway-silver {
+    background-color: #A7A9AC;
+}
+
+.subway-yellow {
+    background-color: #FCCC0A;
+    color: black;
+}
+
+.subway-light-yellow {
+    background-color: #FFF200;
+    color: black;
+}
+
+.subway-gray {
+    background-color: #808183;
+}
+
+.subway-red {
+    background-color: #EE352E;
+}
+
+.subway-green {
+    background-color: #00933C;
+}
+
+.subway-purple {
+    background-color: #B933AD;
+}
+
+.subway-turquoise {
+    background-color: #1E9DBF;
+}
+
+.subway-maroon {
+    background-color: #AB3F57;
+}
+
+.subway-black {
+    background-color: #212121;
+    font-size: 10px;
+    margin-top: -5px;
+}
+
+.subway-deletable {
+    cursor: pointer;
+}
+
+#route-header {
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+#route-diagram {
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 20px;
+    background: rgba(255, 255, 255, 0.25);
+    display: none;
+}
+
+#route-diagram-container {
+    position: absolute;
+    max-height: 20%;
+    width: 92%;
+    overflow-y: auto;
+}
+
+.route-diagram-name {
+    font-size: 12px;
+    display: inline-block;
+}
+
+.route-diagram-transfers {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+#starter {
+    width: 66%;
+    height: 90%;
+    margin-left: 5%;
+    margin-top: 2%;
+    z-index: 5000;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    position: absolute;
+}
+
+#game-header {
+    font-size: 3em;
+    font-weight: bold;
+    position: relative;
+    bottom: 0px;
+    width: 100%;
+    height: 100px;
+    text-align: center;
+    padding: 20px 0;
+    margin-bottom: 20px;
+}
+
+#game-video {
+    text-align: center;
+    top: 100px;
+    bottom: 200px;
+    position: absolute;
+    width: 100%;
+}
+
+#game-video video {
+    
+    right: 0; 
+    top: 0;
+    width: auto;
+    height: 100%;
+    z-index: -100;
+    background-size: cover;
+    overflow: hidden;
+}
+
+#game-start {
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    height: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.game-start-descriptor {
+    margin: 20px auto;
+}
+
+.game-start-choice-large {
+    border: 1px solid white;
+    padding: 10px;
+    cursor: pointer;
+    margin: 20px auto;
+    width: 200px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+}
+
+.game-start-section {
+    display: block;
+    width: 50%;
+    height: 250px;
+    float: left;
+    overflow-y: auto;
+}
+
+div.game-start-greyed {
+    color: #777;
+    border: 1px solid #777;
+    cursor: default;
+}
+
+.game-start-interior {
+    margin: 10px;
+    padding: 10px;
+    width: auto;
+    border: 1px solid #777;
+}
+
+.game-start-choice-small {
+    border: 1px solid white;
+    display: block;
+    cursor: pointer;
+    margin: 20px;
+    padding: 20px;
+}
+
+
+#options {
+    position: absolute;
+    padding: 12px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    z-index: 5000;
+    max-height: 100%;
+    overflow-y: hidden;
+    overflow-x: visible;
+    width: 25%;
+}
+
+#option-section-lines {
+    height: 300px;
+    max-height: 35%;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+#option-section-route {
+    min-height: 200px;
+    max-height: 30%;
+    display: block;
+    overflow: hidden;
+}
+
+#option-section-status {
+    position: absolute;
+    padding: 12px;
+    bottom: 0px;
+    width: 100%;
+    max-height: 35%;
+    overflow-y: auto;
+}
+
+#game-outcome {
+    font-size: 2em;
+}
+
+.game-icon {
+    display: inline-block;
+    width: 50px;
+}
+
+.game-icon-description {
+    font-size: 0.4em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding-left: 60px;
+}
+
+.game-button {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    color: #fff;
+    text-decoration: none;
+}
+
+.attribution {
+    font-size: 0.6em;
+    color: #aaaaaa;
+    width: 90%;
+    text-align: right;
+}
+
+.attribution a {
+    color: #bbbbbb;
+}
+
+.tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 100px;
+    background-color: black;
+    color: #FF6969;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+ 
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%; 
+    margin-left: -50px; /* Use half of the width (120/2 = 60), to center the tooltip */
+}
+
+.tooltip .tooltiptext.info {
+    font-size: 0.9em;
+    color: #fff;
+    width: 80px;
+    margin-left: -40px;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+.no-hover:hover {
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
