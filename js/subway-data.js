@@ -108,8 +108,8 @@ function calculate_total_ridership() {
             r += N_stations[i].riders;
     }
     
-    console.log("Ridership = "+r.toString());
-    console.log("Platforms = "+number_of_active_platforms().toString());
+    //console.log("Ridership = "+r.toString());
+    //console.log("Platforms = "+number_of_active_platforms().toString());
     
     //var rs = r * 1.69375;
     var rs = r;
@@ -128,15 +128,15 @@ function calculate_total_ridership() {
     var psi = 0.0;
     var omega = 10.0;
     
-    var f1 =  beta*(riders_millions + psi);
+    var f1 =  beta*(Math.log(riders_millions + psi) + 1.0);
     var f2 =  zeta*(riders_millions + psi)/(gamma*(number_of_active_platforms() + number_of_active_stations()) + omega);
     var rating = f1 + f2;
-    console.log("Pop score = "+f1.toString()+", Station score = "+f2.toString());
-    console.log(rating);
+    //console.log("Pop score = "+f1.toString()+", Station score = "+f2.toString());
+    //console.log(rating);
     
-    var sigma = 2.27546;
+    var sigma = 3.72073;
     rating *= sigma;
-    console.log(rating);
+    //console.log(rating);
     var letter_grade = '';
     
     //console.log("Rating = "+rating.toString());
