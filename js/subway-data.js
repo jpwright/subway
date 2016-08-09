@@ -121,7 +121,7 @@ function calculate_total_ridership() {
     var mc_cost = Math.pow(number_of_active_platforms()/riders_millions, 2) / alpha;
     $('#metrocard-cost').text("$"+Number(mc_cost).toFixed(2).toString());
     
-    var beta = 2.0;
+    var beta = 5.0;
     var gamma = 5.0;
     var zeta = 10000.0;
     var delta = 0.0;
@@ -134,7 +134,7 @@ function calculate_total_ridership() {
     console.log("Pop score = "+f1.toString()+", Station score = "+f2.toString());
     console.log(rating);
     
-    var sigma = 4.15602;
+    var sigma = 2.27546;
     rating *= sigma;
     console.log(rating);
     var letter_grade = '';

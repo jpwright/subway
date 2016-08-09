@@ -1,3 +1,6 @@
+// Game version
+var GAME_VERSION = 0.10;
+
 // Drawing parameters
 var CURVE_THRESHOLD = 0.005; // Max overshoot from curve momentum.
 var MARKER_RADIUS_DEFAULT = 6.0;

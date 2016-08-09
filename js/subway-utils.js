@@ -72,6 +72,12 @@ function debug_voxels() {
     }
 }
 
+function show_demand_layer() {
+    var image_url = "tools/demand.png";
+    var image_bounds = [[LAT_MIN, LNG_MAX], [LAT_MAX, LNG_MIN]];
+    L.imageOverlay(image_url, image_bounds).addTo(map);
+}
+
 function debug_control_points(c) {
     for (var i = 0; i < c.length; i++) {
         console.log("Set: ("+c[i][0][0]+","+c[i][0][1]+"), ("+c[i][1][0]+","+c[i][1][1]+")");

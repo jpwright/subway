@@ -108,7 +108,7 @@ function load_game_json(data) {
 }
 
 function save_game_json() {
-    var json = {"lines": [], "stations": [], "transfers": []}
+    var json = {"lines": [], "stations": [], "transfers": [], "version": GAME_VERSION}
 
     for (var i = 0; i < N_lines.length; i++) {
         json["lines"].push(N_lines[i].to_json());
