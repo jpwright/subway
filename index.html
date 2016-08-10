@@ -31,7 +31,7 @@
     <script src='js/turf.min.js'></script>
     <script src='js/spline.js'></script>
     <script src='js/bezier.js'></script>
-    
+
     <script src='js/subway-settings.js'></script>
     <script src='js/subway-utils.js'></script>
     <script src='js/subway-files.js'></script>
@@ -42,14 +42,14 @@
     <script src='js/subway-geocoding.js'></script>
     <script src='js/subway-map-events.js'></script>
     <script src='js/subway-data.js'></script>
-    
+
     <input type="file" id="fileElem" multiple accept="image/*" style="display:none" onchange="handle_files(this.files)">
 
 
     <div id="map">
     </div>
     <div id="starter">
-    
+
         <div id="game-header">Brand New Subway</div>
         <div id="game-video">
             <video autoplay="autoplay" loop="loop">
@@ -58,7 +58,7 @@
             </video>
         </div>
         <div id="game-start">
-        
+
             <div class="game-start-section">
                 <div class="game-start-interior">
                     <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
@@ -73,9 +73,9 @@
                     <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963">1963 Nester's Map</div>
                 </div>
             </div>
-            
+
         </div>
-    
+
     </div>
     <div id="options">
     <div id="option-section-lines">
@@ -141,33 +141,44 @@
         </div>
         <div class="subway-line-group">
             <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
-            <div class="subway-line subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
+            <div class="subway-line-long subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
             <div class="subway-line-long subway-clickable subway-imaginary subway-yellow"><div class="height_fix"></div><div class="content">TriboroRX</div></div>
         </div>
-        
+
+        <div id="custom-lines" class="subway-line-group">
+        </div>
+
         <div class="subway-line-group subway-hidden">
             <div class="subway-line subway-clickable subway-imaginary subway-maroon subway-hidden"><div class="height_fix"></div><div class="content">MJ</div></div>
         </div>
-        
-        <!--
-        <div class="subway-line-group subway-hidden">
-            <div class="subway-line subway-clickable subway-hidden subway-blue" id="subway-a-euclid"><div class="height_fix"></div><div class="content">AL</div></div>
-            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-howard"><div class="height_fix"></div><div class="content">&#9992;H</div></div>
-            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-archer"><div class="height_fix"></div><div class="content">&#9992;A</div></div>
-            <div class="subway-line subway-clickable subway-hidden subway-light-yellow" id="subway-airtrain-jfk-connectors"><div class="height_fix"></div><div class="content">&#9992;C</div></div>
-        </div>
-        -->
-        
+
         <div id="additional-options">
             <div id="add-lines" class="game-button">Show Additional Lines</div>
+            <div id="custom-line" class="game-button">Add Custom Line</div>
+        </div>
+        <div id="custom-line-options">
+            <div id="custom-line-options-column-preview">
+                <div id="custom-line-container">
+                    <div id="custom-line-marker" class="subway-line" style="background-color: #808183; color: #ffffff;"><div class="height_fix"></div><div id="custom-line-marker-content" class="content">?</div></div>
+                </div>
+            </div>
+            <div id="custom-line-options-column-inputs">
+                <div class="custom-line-options-label">Line name<br />
+                <input type="text" id="custom-line-name" name="custom-line-name" value="?" /></div>
+                <div class="custom-line-options-label">Background CSS<br />
+                <input type="text" id="custom-line-css-bg" name="custom-line-css-bg" value="#808183" /></div>
+                <div class="custom-line-options-label">Text CSS<br />
+                <input type="text" id="custom-line-css-text" name="custom-line-css-text" value="#FFFFFF" /></div>
+                <div id="custom-line-add" class="game-button">Add</div>
+            </div>
         </div>
     </div>
-    
+
     <div id="option-section-route">
         <div id="route-header"><span id="route-triangle"><i class="fa fa-caret-right" aria-hidden="true"></i></span> Route Diagram</div>
         <div id="route-diagram-container"><div id="route-diagram"></div></div>
     </div>
-    
+
     <div id="option-section-status">
         <div id="game-outcome">
             <div id="metrocard">
@@ -193,8 +204,8 @@
     </div>
 
     </div>
-    
-    
+
+
     <script src='js/subway-main.js'></script>
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -129,13 +129,13 @@ function number_of_active_platforms() {
 }
 
 function regenerate_popups() {
-    
+
     for (var i = 0; i < N_stations.length; i++) {
         var station = N_stations[i];
         if (station.active)
             station.generate_popup();
     }
-    
+
 }
 
 function clear_debug_layer() {
@@ -149,7 +149,7 @@ function recalculate_all_ridership(instruction) {
     for (var i = 0; i < N_stations.length; i++) {
         calculate_ridership(i, instruction);
     }
-    
+
 }
 
 function futz_boroughs() {
@@ -160,6 +160,9 @@ function futz_boroughs() {
     }
 }
 
+function is_css_color(s) {
+    return String(s).match(/^#[0-9A-Fa-f]{6}$/);
+}
 
 function newShuttleTemplate(num) {
     return '<div class="subway-line subway-clickable subway-gray subway-shuttle subway-shuttle-add" id="S-'+num.toString()+'"><div class="height_fix"></div><div class="content">+</div></div>'

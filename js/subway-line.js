@@ -584,7 +584,7 @@ function generate_route_diagram(line) {
     var line_stations = line.stations;
     $('#route-diagram').empty();
     for (var i = 0; i < line_stations.length; i++) {
-    
+
         var line_transfers = [];
         var station = N_stations[line_stations[i]];
         var station_entry = '<div class="route-diagram-entry"><div class="route-diagram-name">'+station.name+'</div><div class="route-diagram-transfers">';
@@ -592,7 +592,7 @@ function generate_route_diagram(line) {
             if (N_lines[station.lines[j]].id != line.id)
                 line_transfers.push(station.lines[j]);
         }
-        
+
         for (var k = 0; k < N_transfers.length; k++) {
             var transfers_exist = false;
             if (station.id == N_transfers[k].origin) {
@@ -603,7 +603,7 @@ function generate_route_diagram(line) {
                 var transfer_station = N_transfers[k].origin;
                 transfers_exist = true;
             }
-            
+
             if (transfers_exist) {
                 for (var m = 0; m < N_stations[transfer_station].lines.length; m++) {
                     if (!is_in_array(N_stations[transfer_station].lines[m], line_transfers))
@@ -611,7 +611,7 @@ function generate_route_diagram(line) {
                 }
             }
         }
-        
+
         var html_css_combos = [];
         for (var q = 0; q < line_transfers.length; q++) {
             var html_css_combo = N_lines[line_transfers[q]].html + ' ' + N_lines[line_transfers[q]].css;
@@ -620,7 +620,7 @@ function generate_route_diagram(line) {
                 html_css_combos.push(html_css_combo);
             }
         }
-            
+
         station_entry += '</div></div>';
         $('#route-diagram').append(station_entry);
     }
@@ -628,4 +628,5 @@ function generate_route_diagram(line) {
 
 var N_lines;
 var N_line_groups;
+var N_custom_line_colors;
 var N_active_line;

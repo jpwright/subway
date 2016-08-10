@@ -296,12 +296,63 @@ textarea.station-name-edit {
 
 .subway-black {
     background-color: #212121;
-    font-size: 10px;
-    margin-top: -5px;
 }
 
 .subway-deletable {
     cursor: pointer;
+}
+
+#custom-line-container {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%,200%);
+    width: auto;
+    height: auto;
+}
+
+#custom-line-options {
+    width: 100%;
+    font-size: small;
+    height: auto;
+    position: relative;
+}
+
+#custom-line-options-column-preview {
+    width: 35%;
+    float: left;
+    position: relative;
+    height: auto;
+}
+
+#custom-line-options-column-inputs {
+    width: 65%;
+    float: right;
+}
+
+.custom-line-options-label {
+    margin: 5px;
+    line-height: 1.6em;
+}
+
+.custom-line-options-label input {
+    width: 75%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 0;
+    color: white;
+    padding: 5px;
+}
+
+.custom-line-options-label input:focus {
+    outline-width: 0;
+}
+
+.custom-line-options-label input.issue {
+    background-color: rgba(50, 0, 0, 0.2);
+}
+
+#custom-line-add {
+    width: 75%;
+    text-align: center;
 }
 
 #route-header {
@@ -372,8 +423,8 @@ textarea.station-name-edit {
 }
 
 #game-video video {
-    
-    right: 0; 
+
+    right: 0;
     top: 0;
     width: auto;
     height: 100%;
@@ -526,12 +577,12 @@ div.game-start-greyed {
     text-align: center;
     padding: 5px 0;
     border-radius: 6px;
- 
+
     /* Position the tooltip text - see examples below! */
     position: absolute;
     z-index: 1;
     bottom: 100%;
-    left: 50%; 
+    left: 50%;
     margin-left: -50px; /* Use half of the width (120/2 = 60), to center the tooltip */
 }
 
