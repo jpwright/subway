@@ -158,7 +158,7 @@ function remove_line_from_station_event(e) {
 
     regenerate_popups();
     generate_route_diagram(N_active_line);
-    
+
     calculate_ridership(station_id_to_remove, RIDERSHIP_NOCHANGE);
     calculate_total_ridership();
 
@@ -188,7 +188,7 @@ function build_to_station_event(e) {
         var line_id = station_lines[i];
         var line = N_lines[line_id];
 
-        $('div.subway-lines').append('<div class="'+line.css+'"><div class="height_fix"></div><div class="content">'+line.html+'</div></div>');
+        $('div.subway-lines').append('<div class="'+line.css+'" style="background-color: '+line.color_bg+'; color: '+line.color_text+';"><div class="height_fix"></div><div class="content">'+line.html+'</div></div>');
 
         var new_index = line.insert_station(parseInt(station_id));
 
@@ -215,7 +215,7 @@ function build_to_station_event(e) {
     }
 
     station_layer.bringToFront();
-    
+
     calculate_ridership(station_id, RIDERSHIP_NOCHANGE);
     calculate_total_ridership();
 

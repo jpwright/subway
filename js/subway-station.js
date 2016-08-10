@@ -46,7 +46,7 @@ class Station {
             var line = this.lines[i];
             var html_css_combo = N_lines[line].html + ' ' + N_lines[line].css;
             if (!is_in_array(html_css_combo, html_css_combos)) {
-                station_content += '<div id="'+this.id.toString()+":"+line.toString()+'" class="tooltip subway-deletable '+N_lines[line].css+'"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div><span class="tooltiptext">Click to delete</span></div>';
+                station_content += '<div id="'+this.id.toString()+":"+line.toString()+'" class="tooltip subway-deletable '+N_lines[line].css+'" style="background-color: '+N_lines[line].color_bg+'; color: '+N_lines[line].color_text+';"><div class="height_fix"></div><div class="content">'+N_lines[line].html+'</div><span class="tooltiptext">Click to delete</span></div>';
                 html_css_combos.push(html_css_combo);
             }
         }
@@ -56,7 +56,7 @@ class Station {
         station_content += '<div class="station-buttons"><div class="station-content-button station-transfer" id="transfer-'+this.id.toString()+'">Transfer</div>';
 
         if (!is_in_array(N_active_line.id, this.lines)) {
-            station_content += '<div class="station-content-button station-build line-'+N_active_line.id.toString()+'" id="build-'+this.id.toString()+'">Build <div class="subway-line-mini '+N_active_line.css+'"><div class="height_fix"></div><div class="content">'+N_active_line.html+'</div></div></div>';
+            station_content += '<div class="station-content-button station-build line-'+N_active_line.id.toString()+'" id="build-'+this.id.toString()+'">Build <div class="subway-line-mini '+N_active_line.css+'" style="background-color: '+N_active_line.color_bg+'; color: '+N_active_line.color_text+';"><div class="height_fix"></div><div class="content">'+N_active_line.html+'</div></div></div>';
         }
 
         station_content += '<div class="station-content-button station-delete ';
@@ -130,7 +130,7 @@ class Station {
                 transfer.undraw();
             }
         }
-        
+
         // Trigger ridership recalculation for nearby stations
         calculate_ridership(this.id, RIDERSHIP_DELETE);
 
@@ -155,18 +155,18 @@ class Station {
 
 function geocode_to_station(geo, line, borough, neighborhood) {
 
-    
+
 
     var N_station = new Station(geo.latlng.lat, geo.latlng.lng, geo.name, geo.info);
-    
+
     N_stations[N_station.id] = N_station;
     var new_index = N_active_line.insert_station(N_station.id);
-    
+
     N_station.borough = borough;
     N_station.neighborhood = neighborhood;
 
     calculate_ridership(N_station.id, RIDERSHIP_ADD);
-    
+
     N_station.marker.openPopup();
 
     var impacted_lines = [N_active_line.id];
@@ -192,7 +192,7 @@ function geocode_to_station(geo, line, borough, neighborhood) {
 
     station_layer.bringToFront();
     generate_route_diagram(line);
-    
+
     calculate_total_ridership();
 
 }

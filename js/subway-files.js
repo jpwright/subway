@@ -30,6 +30,8 @@ function handle_server_file(file) {
 function load_game_json(data) {
     initialize_game_state();
 
+    N_lines = data["lines"];
+
     for (var j = 0; j < data["lines"].length; j++) {
         var d = data["lines"][j];
         N_lines[d["id"]].stations = d["stations"];
@@ -38,7 +40,7 @@ function load_game_json(data) {
 
     var fix_corrupt_game = false;
     var fix_boroughs = false;
-    
+
     for (var i = 0; i < data["stations"].length; i++) {
         var d = data["stations"][i];
 
@@ -78,7 +80,7 @@ function load_game_json(data) {
             }
         }
     }
-    
+
     if (fix_boroughs) {
         futz_boroughs();
     }
@@ -101,9 +103,9 @@ function load_game_json(data) {
 
     station_layer.bringToFront();
     generate_route_diagram(N_active_line);
-    
+
     recalculate_all_ridership(RIDERSHIP_ADD);
-    
+
     calculate_total_ridership();
 }
 
