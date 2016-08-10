@@ -6,15 +6,15 @@ function create_station_marker(id, latlng_orig) {
         // Disable new station creation.
         map.off('click', handle_map_click);
 
-        if (transfer_state == 1) {
+        if (N_transfer_state == 1) {
 
-            transfer_end = id;
-            transfer_state = 0;
+            N_transfer_end = id;
+            N_transfer_state = 0;
 
-            var different_stations = transfer_origin != transfer_end;
-            var stations_exist = (N_stations[transfer_origin].active && N_stations[transfer_end]);
-            var origin_latlng = N_stations[transfer_origin].marker.getLatLng();
-            var end_latlng = N_stations[transfer_end].marker.getLatLng();
+            var different_stations = N_transfer_origin != N_transfer_end;
+            var stations_exist = (N_stations[N_transfer_origin].active && N_stations[N_transfer_end]);
+            var origin_latlng = N_stations[N_transfer_origin].marker.getLatLng();
+            var end_latlng = N_stations[N_transfer_end].marker.getLatLng();
             var point1 = {
             "type": "Feature",
                 "properties": {},
@@ -37,7 +37,7 @@ function create_station_marker(id, latlng_orig) {
             };
             var distance = turf.distance(point1, point2, "miles");
             if (different_stations && stations_exist && distance < 0.5) {
-                var transfer = new Transfer(transfer_origin, transfer_end);
+                var transfer = new Transfer(N_transfer_origin, N_transfer_end);
                 transfer.draw();
                 N_transfers.push(transfer);
             }
@@ -228,9 +228,9 @@ function transfer_station_event(e) {
     var station_id = $(this).attr('id').replace('transfer-', '');
     var station = N_stations[station_id];
 
-    if (transfer_state == 0) {
-        transfer_origin = station_id;
-        transfer_state = 1;
+    if (N_transfer_state == 0) {
+        N_transfer_origin = station_id;
+        N_transfer_state = 1;
     }
 
 }

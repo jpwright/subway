@@ -26,4 +26,6 @@ class Transfer {
     }
 }
     
-    
+var N_transfer_state = 0;
+var N_transfer_origin = -1;
+var N_transfer_end = -1;
