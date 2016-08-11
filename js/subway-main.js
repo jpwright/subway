@@ -78,6 +78,7 @@ $("#route-header").click(function(e) {
 });
 
 var N_number_of_shuttles = 0;
+var N_game_started = false;
 
 function initialize_game_state() {
 
@@ -294,12 +295,24 @@ $(function() {
         var custom_line_css_bg = $("#custom-line-css-bg").val();
         var custom_line_css_text = $("#custom-line-css-text").val();
         var issue = false;
+        if (custom_line_name.length == 0) {
+            $('#custom-line-name').addClass('issue');
+            $('#custom-line-error').text('Enter a name.');
+            issue = true;
+        }
+        if (find_line_by_name(custom_line_name) != null) {
+            $('#custom-line-name').addClass('issue');
+            $('#custom-line-error').text('Name already in use.');
+            issue = true;
+        }
         if (!is_css_color(custom_line_css_bg)) {
             $('#custom-line-css-bg').addClass('issue');
+            $('#custom-line-error').text('Use a valid hex color code.');
             issue = true;
         }
         if (!is_css_color(custom_line_css_text)) {
             $('#custom-line-css-text').addClass('issue');
+            $('#custom-line-error').text('Use a valid hex color code.');
             issue = true;
         }
         var custom_line_css_class = 'subway-line';
@@ -310,8 +323,15 @@ $(function() {
             add_custom_line(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
             add_custom_line_selector(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
 
+            $('#custom-line-name').removeClass('issue');
+            $('#custom-line-css-bg').removeClass('issue');
+            $('#custom-line-css-text').removeClass('issue');
+            $('#custom-line-error').text('');
+            
             $("#custom-line-options").hide();
             N_custom_line_shown = false;
+        } else {
+            $("#option-section-lines").animate({scrollTop: $('#option-section-lines').prop('scrollHeight')}, 1000);
         }
     });
 

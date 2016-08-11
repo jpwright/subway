@@ -30,6 +30,7 @@ function handle_server_file(file) {
 
 function load_game_json(data) {
     initialize_game_state();
+    $("#custom-lines").empty();
 
     for (var j = 0; j < data["lines"].length; j++) {
         var d = data["lines"][j];
