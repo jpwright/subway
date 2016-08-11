@@ -1,5 +1,5 @@
 // Game version
-var GAME_VERSION = 0.10;
+var GAME_VERSION = 0.11;
 
 // Drawing parameters
 var CURVE_THRESHOLD = 0.005; // Max overshoot from curve momentum.
@@ -61,3 +61,6 @@ var TRANSIT_MODIFIERS = {
     "John F. Kennedy International Airport": 35000,
     "LaGuardia Airport": 25000
 }
+
+// Custom lines
+var CUSTOM_LINE_FIRST_INDEX = 97;

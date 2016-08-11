@@ -258,7 +258,6 @@ $(function() {
         if (fileElem) {
             fileElem.click();
         }
-        $("#starter").hide();
         e.preventDefault(); // prevent navigation to "#"
     });
 
@@ -308,21 +307,8 @@ $(function() {
             custom_line_css_class = 'subway-line-long';
         }
         if (!issue) {
-            var line = new Line(custom_line_name, custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
-            N_lines.push(line);
-            var line_group_exists = false;
-            for (var i = 0; i < N_line_groups.length; i++) {
-                if (N_line_groups[i].name == custom_line_css_bg) {
-                    N_line_groups[i].add_line(line.id);
-                    line_group_exists = true;
-                }
-            }
-            if (!line_group_exists) {
-                N_line_groups.push(new LineGroup(custom_line_css_bg, [line.id]));
-            }
-
-            $("#custom-lines").append('<div class="'+custom_line_css_class+' subway-clickable subway-imaginary" style="background-color: '+custom_line_css_bg+'; color: '+custom_line_css_text+'"><div class="height_fix"></div><div class="content">'+custom_line_name+'</div></div>');
-            $("#custom-lines").show();
+            add_custom_line(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
+            add_custom_line_selector(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
 
             $("#custom-line-options").hide();
             N_custom_line_shown = false;

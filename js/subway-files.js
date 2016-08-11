@@ -13,6 +13,7 @@ function handle_files(files) {
             // Render thumbnail.
             var data = JSON.parse(e.target.result);
             load_game_json(data);
+            $("#starter").hide();
         };
     })(f);
 
@@ -30,12 +31,19 @@ function handle_server_file(file) {
 function load_game_json(data) {
     initialize_game_state();
 
-    N_lines = data["lines"];
-
     for (var j = 0; j < data["lines"].length; j++) {
         var d = data["lines"][j];
-        N_lines[d["id"]].stations = d["stations"];
-        N_lines[d["id"]].draw_map = d["draw_map"];
+        var line_id = d["id"];
+        
+        if (line_id < N_lines.length) {
+            N_lines[line_id].stations = d["stations"];
+            N_lines[line_id].draw_map = d["draw_map"];
+        } else {
+            add_custom_line(d.html, d.css, d.color_bg, d.color_text);
+            add_custom_line_selector(N_lines[j].html, N_lines[j].css, N_lines[j].color_bg, N_lines[j].color_text);
+            N_lines[j].stations = d["stations"];
+            N_lines[j].draw_map = d["draw_map"];
+        }
     }
 
     var fix_corrupt_game = false;
@@ -86,6 +94,7 @@ function load_game_json(data) {
     }
 
     for (var k = 0; k < N_lines.length; k++) {
+        console.log(N_lines[k]);
         N_lines[k].generate_draw_map();
         N_lines[k].generate_control_points();
     }
@@ -99,8 +108,7 @@ function load_game_json(data) {
         t.draw();
         N_transfers.push(t);
     }
-
-
+    
     station_layer.bringToFront();
     generate_route_diagram(N_active_line);
 
