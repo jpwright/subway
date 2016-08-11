@@ -133,6 +133,7 @@ textarea.station-name-edit {
     margin-bottom: -12px;
     height: 28px;
     top: -12px;
+    white-space: nowrap;
 }
 
 
@@ -141,6 +142,7 @@ textarea.station-name-edit {
     height: 100%;
     display: inline-block;
     text-align: center;
+    white-space: nowrap;
 }
 
 
