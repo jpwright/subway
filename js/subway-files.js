@@ -134,11 +134,13 @@ function save_game_json() {
         json["transfers"].push(N_transfers[i].to_json());
     }
 
-    $("<a />", {
+    /*$("<a />", {
         "download": "bns_saved_game.json",
         "href" : "data:application/json," + encodeURIComponent(JSON.stringify(json))
     }).appendTo("body")
     .click(function() {
         $(this).remove()
-    })[0].click()
+    })[0].click();*/
+    var blob = new Blob([JSON.stringify(json)], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "bns_saved_game.json");
 }
