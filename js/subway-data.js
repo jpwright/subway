@@ -11,6 +11,8 @@ function calculate_ridership(station_id, instruction) {
     if (voxel_i < 2 || voxel_i > VOXELS_DIM - 2 || voxel_j < 2 || voxel_j > VOXELS_DIM - 2) {
         // This is outside our ridership estimate area.
         // For now, just return 0.
+        N_stations[station_id].riders = 0.0;
+        N_stations[station_id].generate_popup();
         return 0.0;
     }
     
