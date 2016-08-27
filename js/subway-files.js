@@ -111,7 +111,10 @@ function load_game_json(data) {
         N_transfers.push(t);
     }
     
-    station_layer.bringToFront();
+    if (!HEADLESS_MODE) {
+        station_layer.bringToFront();
+    }
+    
     generate_route_diagram(N_active_line);
 
     recalculate_all_ridership(RIDERSHIP_ADD);

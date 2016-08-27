@@ -96,10 +96,14 @@ function calculate_ridership(station_id, instruction) {
     total_ridership *= Math.log(num_accessible_lines) + 1.0;
     
     // Add some noise!
-    total_ridership *= (Math.random() - 0.5)*0.05 + 1.0;
+    if (!HEADLESS_MODE) {
+        total_ridership *= (Math.random() - 0.5)*0.05 + 1.0;
+    }
     
     N_stations[station_id].riders = total_ridership;
     N_stations[station_id].generate_popup();
+    
+    return total_ridership;
     
 }
 
@@ -140,6 +144,10 @@ function calculate_total_ridership() {
     rating *= sigma;
     //console.log(rating);
     var letter_grade = '';
+    
+    if (HEADLESS_MODE) {
+        return rating;
+    }
     
     //console.log("Rating = "+rating.toString());
     if (rating >= 97) {

@@ -368,7 +368,9 @@ class Line {
                     var track = L.curve(bezier_options, curve_options);
 
                     //var track = L.polyline(latlngs, curve_options);
-                    curve_layer.addLayer(track);
+                    if (!HEADLESS_MODE) {
+                        curve_layer.addLayer(track);
+                    }
                     this.tracks.push(track);
 
                     // Adjust marker styles.

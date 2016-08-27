@@ -51,7 +51,10 @@ function create_station_marker(id, latlng_orig) {
         }, 1000);
     });
 
-    station_layer.addLayer(station);
+    if (!HEADLESS_MODE) {
+        station_layer.addLayer(station);
+    }
+    
     return station;
 }
 

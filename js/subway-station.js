@@ -94,7 +94,9 @@ class Station {
     del() {
 
         // Remove the marker.
-        station_layer.removeLayer(this.marker);
+        if (!HEADLESS_MODE) {
+            station_layer.removeLayer(this.marker);
+        }
 
         // Set the station to "inactive".
         this.active = false;
