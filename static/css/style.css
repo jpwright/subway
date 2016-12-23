@@ -1,0 +1,662 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+#line-selector {
+    width: 100%;
+}
+
+#dropdown-line-button {
+    width: 100%;
+    text-align: left;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+#dropdown-line-button:hover, #dropdown-line-button:focus {
+    color: #FFF;
+}
+
+#dropdown-line-menu {
+    width: 100%;
+}
+
+.leaflet-tooltip {
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 5px;
+    text-align: center;
+    width: 160px;
+}
+
+.tooltip-hide {
+    display: none;
+}
+
+.station-popup {
+    width: 250px;
+    bottom: 0px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.station-content {
+    padding: 5px;
+}
+
+.station-popup .leaflet-popup-content {
+    margin: 0px;
+    padding-top: 10px;
+}
+
+.station-popup .leaflet-popup-close-button {
+    margin-top: 12px;
+}
+
+.station-popup .leaflet-popup-content-wrapper {
+    border-radius: 0px;
+    padding: 0px;
+}
+
+.station-popup .leaflet-popup-content-wrapper, .station-popup .leaflet-popup-tip {
+    background: black;
+    color: white;
+}
+
+.station-name {
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 5px;
+    border-top: 5px solid white;
+}
+
+textarea.station-name-edit {
+    background-color: black;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 1em;
+    height: 1em;
+    width: 200px;
+    margin: 0px;
+    padding: 5px;
+}
+
+.station-info {
+    font-size: 1em;
+}
+
+.station-buttons {
+}
+
+.station-content-button {
+    cursor: pointer;
+    display: inline-block;
+    margin: 2px;
+    padding: 5px;
+    background-color: #333333;
+}
+
+.station-delete {
+    float: right;
+}
+
+.station-build {
+    float: right;
+}
+
+.station-transfer {
+    float: right;
+    text-align: center;
+}
+
+.subway-lines {
+    overflow: visible;
+}
+
+.subway-line-group {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 4px;
+    border: 1px solid #999;
+    vertical-align: top;
+    overflow: visible;
+}
+
+.subway-line-long {
+    -webkit-border-radius: 1em;
+    -moz-border-radius: 1em;
+    border-radius: 1em;
+    border: 2px solid rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    padding: 0.25em;
+    font-weight: bold;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    top: 0px;
+    white-space: nowrap;
+}
+
+
+.subway-line-long .content {
+    position: relative;
+    height: 1em;
+    min-width: 1em;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.subway-line-mini.subway-line-long {
+    
+    -webkit-border-radius: 1em;
+    -moz-border-radius: 1em;
+    border-radius: 1em;
+    border: 2px solid rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    padding: 0.125em;
+    font-weight: bold;
+    font-size: 0.75em;
+    line-height: 1em;
+    position: relative;
+    display: inline-block;
+    top: -0.25em;
+    white-space: nowrap;
+}
+
+.subway-line-mini.subway-line-long .content {
+    position: relative;
+    height: 0.5em;
+    min-width: 1em;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.subway-line-mega {
+    -webkit-border-radius: 1.25em;
+    -moz-border-radius: 1.25em;
+    border-radius: 1.25em;
+    border: 2px solid rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+    padding: 0.25em;
+    font-weight: bold;
+    font-size: 1.25em;
+    line-height: 1.25em;
+    position: relative;
+    display: inline-block;
+    top: 0px;
+    white-space: nowrap;
+}
+
+
+.subway-line-mega .content {
+    position: relative;
+    height: 1.25em;
+    min-width: 1.25em;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.subway-clickable {
+    cursor: pointer;
+}
+
+.subway-selected {
+    border: 2px solid black;
+}
+
+.subway-blue {
+    background-color: #0039A6;
+}
+
+.subway-orange {
+    background-color: #FF6319;
+}
+
+.subway-light-green {
+    background-color: #6CBE45;
+}
+
+.subway-brown {
+    background-color: #996633;
+}
+
+.subway-silver {
+    background-color: #A7A9AC;
+}
+
+.subway-yellow {
+    background-color: #FCCC0A;
+    color: black;
+}
+
+.subway-light-yellow {
+    background-color: #FFF200;
+    color: black;
+}
+
+.subway-gray {
+    background-color: #808183;
+}
+
+.subway-red {
+    background-color: #EE352E;
+}
+
+.subway-green {
+    background-color: #00933C;
+}
+
+.subway-purple {
+    background-color: #B933AD;
+}
+
+.subway-turquoise {
+    background-color: #1E9DBF;
+}
+
+.subway-maroon {
+    background-color: #AB3F57;
+}
+
+.subway-black {
+    background-color: #212121;
+}
+
+.subway-deletable {
+    cursor: pointer;
+}
+
+.station-popup-line-marker {
+    margin: 2px;
+}
+
+#custom-line-container {
+    position: relative;
+    float: left;
+    left: 50%;
+    margin-top: 20px;
+}
+
+#custom-line-marker {
+    position: relative;
+    float: left;
+    left: -50%;
+}
+
+#custom-line-options {
+    width: 100%;
+    font-size: small;
+    position: relative;
+}
+
+#custom-line-options-column-preview {
+    width: 40%;
+    float: left;
+    overflow: hidden;
+}
+
+#custom-line-options-color-pickers {
+    width: 20%;
+    float: left;
+    height: auto;
+    padding-top: 1em;
+}
+
+#custom-line-options-column-inputs {
+    width: 40%;
+    float: right;
+}
+
+.custom-line-options-label {
+    margin: 5px;
+    line-height: 1.6em;
+}
+
+.custom-line-options-label input {
+    width: 75%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 0;
+    color: white;
+    padding: 5px;
+}
+
+.custom-line-options-label input:focus {
+    outline-width: 0;
+}
+
+.custom-line-options-label input.issue {
+    background-color: rgba(50, 0, 0, 0.5);
+}
+
+#custom-line-add {
+    width: 75%;
+    text-align: center;
+}
+
+#route-header {
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+#route-diagram {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+#route-diagram-container {
+    padding: 5px;
+}
+
+.route-diagram-name {
+    font-size: 12px;
+    display: inline-block;
+}
+
+.route-diagram-transfers {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.route-diagram-stop {
+    position: relative;
+    height: 20px;
+}
+
+.route-diagram-station-marker {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border-radius: 0.5em;
+    border: 0.25em solid black;
+    background-color: white;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+}
+
+.route-diagram-connector {
+    position: absolute;
+    float: left;
+    height: 0.45em;
+    width: 0.4em;
+    left: 0.8em;
+    top: 1.05em;
+}
+
+.route-diagram-connector-branch {
+    position: absolute;
+    float: left;
+    width: 0.4em;
+    left: -0.1em;
+    top: 1.05em;
+}
+
+.route-diagram-connector-top-joint {
+    position: absolute;
+    float: left;
+    height: 0.4em;
+    width: 0.8em;
+    left: -0.1em;
+    border-radius: 0.4em;
+}
+
+.route-diagram-connector-bottom-joint {
+    position: absolute;
+    float: left;
+    height: 0.4em;
+    width: 0.8em;
+    left: -0.1em;
+    top: 0.35em;
+    border-radius: 0.4em;
+}
+
+#starter {
+    width: 66%;
+    height: 90%;
+    margin-left: 5%;
+    margin-top: 2%;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    position: absolute;
+}
+
+#game-header {
+    font-size: 3em;
+    font-weight: bold;
+    position: relative;
+    bottom: 0px;
+    width: 100%;
+    height: 100px;
+    text-align: center;
+    padding: 20px 0;
+    margin-bottom: 20px;
+}
+
+#game-video {
+    text-align: center;
+    top: 100px;
+    bottom: 200px;
+    position: absolute;
+    width: 100%;
+}
+
+#game-video video {
+
+    right: 0;
+    top: 0;
+    width: auto;
+    height: 100%;
+    z-index: -100;
+    background-size: cover;
+    overflow: hidden;
+}
+
+#game-start {
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    height: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.game-start-descriptor {
+    margin: 20px auto;
+}
+
+.game-start-choice-large {
+    border: 1px solid white;
+    padding: 10px;
+    cursor: pointer;
+    margin: 20px auto;
+    width: 200px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+}
+
+.game-start-section {
+    display: block;
+    width: 50%;
+    height: 250px;
+    float: left;
+    overflow-y: auto;
+}
+
+div.game-start-greyed {
+    color: #777;
+    border: 1px solid #777;
+    cursor: default;
+}
+
+.game-start-interior {
+    margin: 10px;
+    padding: 10px;
+    width: auto;
+    border: 1px solid #777;
+}
+
+.game-start-choice-small {
+    border: 1px solid white;
+    display: block;
+    cursor: pointer;
+    margin: 20px;
+    padding: 20px;
+}
+
+#game-start-city-picker {
+    width: 200px;
+    text-align: center;
+    margin: 0 auto;
+}
+
+
+#options {
+    position: absolute;
+    padding: 12px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    z-index: 5000;
+    max-height: 100%;
+    overflow-y: hidden;
+    overflow-x: visible;
+    width: 25%;
+}
+
+#option-section-tools {
+    height: 50px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+#option-section-lines {
+    height: 150px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+#option-section-route {
+    min-height: 200px;
+    display: block;
+}
+
+#option-section-status {
+    position: absolute;
+    padding: 12px;
+    bottom: 0px;
+    max-height: 35%;
+    overflow-y: auto;
+}
+
+#game-outcome {
+    font-size: 2em;
+}
+
+.game-icon {
+    display: inline-block;
+    width: 50px;
+}
+
+.game-icon-description {
+    font-size: 0.4em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding-left: 60px;
+}
+
+.game-button {
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    color: #fff;
+    text-decoration: none;
+}
+
+.game-button-large {
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    color: #fff;
+    text-decoration: none;
+    padding: 5px;
+}
+
+.game-button-active {
+    background-color: rgba(255, 200, 200, 0.1);
+    font-weight: bold;
+}
+
+.attribution {
+    font-size: 0.6em;
+    color: #aaaaaa;
+    margin-top: 5px;
+}
+
+.attribution a {
+    color: #bbbbbb;
+}
+
+.tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 100px;
+    background-color: black;
+    color: #FF6969;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -50px; /* Use half of the width (120/2 = 60), to center the tooltip */
+}
+
+.tooltip .tooltiptext.info {
+    font-size: 0.9em;
+    color: #fff;
+    width: 80px;
+    margin-left: -40px;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+.no-hover:hover {
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
