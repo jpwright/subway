@@ -159,7 +159,7 @@ textarea.station-name-edit {
 }
 
 .subway-line-mini.subway-line-long {
-    
+
     -webkit-border-radius: 1em;
     -moz-border-radius: 1em;
     border-radius: 1em;
@@ -208,6 +208,10 @@ textarea.station-name-edit {
     display: inline-block;
     text-align: center;
     white-space: nowrap;
+}
+
+.subway-line-marker-diagram {
+    margin-left: 5px;
 }
 
 .subway-clickable {
