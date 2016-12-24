@@ -16,7 +16,7 @@ import TransitGIS
 
 
 app = Flask(__name__, static_url_path='/static')
-app.secret_key = 'F12Yr58j3yX T~Y%C!efE]Fwc/,?KT'
+app.secret_key = 'F12Yr58j3yX T~Y%C!efE]Fxc/,?KT'
 
 session_to_map = {}
 

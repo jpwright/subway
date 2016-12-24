@@ -54,12 +54,12 @@ function create_station_marker(id, latlng_orig) {
     if (!HEADLESS_MODE) {
         station_layer.addLayer(station);
     }
-    
+
     return station;
 }
 
 function handle_map_click(e) {
-    
+
     if (NS_interface.active_line != null) {
         NS_interface.add_new_station(e.latlng.lat, e.latlng.lng);
     }

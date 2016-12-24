@@ -12,10 +12,10 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
     <link rel="stylesheet" href="static/css/bootstrap.min.css" />
-    
-    <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
 
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0-beta.8/esri-leaflet.js"></script>
 
@@ -27,7 +27,7 @@
 
     <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
-    
+
     <script src="static/js/spectrum.js"></script>
     <link rel="stylesheet" href="static/css/spectrum.css" />
 
@@ -36,7 +36,7 @@
     <script src='static/js/turf.min.js'></script>
     <script src='static/js/spline.js'></script>
     <script src='static/js/bezier.js'></script>
-    
+
     <script src='static/js/FileSaver.min.js'></script>
 
     <script src='static/js/subway-settings.js'></script>
@@ -46,15 +46,15 @@
     <script src='static/js/subway-geocoding.js'></script>
     <script src='static/js/subway-map-events.js'></script>
     <script src='static/js/subway-data.js'></script>
-    
+
     <script src='static/js/Transit.js'></script>
     <script src='static/js/TransitDraw.js'></script>
     <script src='static/js/TransitUI.js'></script>
-    
+
     <script src="static/js/bootstrap.min.js"></script>
-    
+
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_upU9Ivq9tc2tk450HpgPr6zC3NHSjjs&libraries=places"></script>
-    
+
     <input type="file" id="fileElem" style="display:none" onchange="handle_files(this.files)">
 
 
@@ -105,7 +105,7 @@
             <li><a id="line-selector-new" href="#">New Line</a></li>
             </ul>
         </div>
-        
+
         <div id="custom-line-options">
             <div id="custom-line-options-column-preview">
                 <div id="custom-line-container">
@@ -117,7 +117,7 @@
                     <input type="color" id="color-picker-fg" />
                 </div>
             <div id="custom-line-options-column-inputs">
-                
+
                 <div class="custom-line-options-label">Line name<br />
                 <input type="text" id="custom-line-name" name="custom-line-name" placeholder="?" /></div>
                 <div id="custom-line-error"></div>
@@ -131,7 +131,7 @@
     </div>
 
     <div id="option-section-status">
-       
+
         <div id="game-load" class="game-button-large">Load</div>
         <div id="game-save" class="game-button-large">Save</div>
         <a id="game-about" class="game-button-large" href="http://jpwright.net/projects/subway">About this game</a>

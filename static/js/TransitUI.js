@@ -22,6 +22,7 @@ class TransitUI {
         this.map.addLayer(this.station_marker_layer);
 
         this.map.on('mouseup', () => {
+            console.log("map.dragging.enable");
             this.map.dragging.enable();
             this.map.removeEventListener('mousemove');
             this.preview_paths_enabled = true;
@@ -34,9 +35,9 @@ class TransitUI {
             NS_interface.preview_handler(e);
         });
 
-        this.show_hexagons(0.2);
+        //this.show_hexagons(0.2);
         this.map.on('moveend', function(e) {
-            NS_interface.show_hexagons(0.2);
+            //NS_interface.show_hexagons(0.2);
         });
     }
 
@@ -262,6 +263,7 @@ class TransitUI {
             //L.DomEvent.stop(event);
             NS_interface.preview_paths_enabled = false;
             NS_interface.preview_clear();
+            console.log("map.dragging.disable");
             NS_interface.map.dragging.disable();
             let {lat: circleStartingLat, lng: circleStartingLng} = station_marker.marker._latlng;
             let {lat: mouseStartingLat, lng: mouseStartingLng} = event.latlng;
@@ -280,6 +282,16 @@ class TransitUI {
                     NS_interface.draw_line(lines[i]);
                 }
             });
+        });
+
+        station_marker.marker.on('drag', function(e) {
+            console.log('marker drag event');
+        });
+        station_marker.marker.on('dragstart', function(e) {
+            console.log('marker dragstart event');
+        });
+        station_marker.marker.on('dragend', function(e) {
+            console.log('marker dragend event');
         });
 
         station_marker.marker.addTo(this.station_marker_layer);
@@ -620,7 +632,7 @@ class TransitUI {
 
         // recursive DFS to find all the paths
         function dfs(v) {
-            console.log("DFS: node "+v.station.name);
+            //console.log("DFS: node "+v.station.name);
 
             bezier_coordinates[bezier_coordinates.length-1].push({"x": v.station.location[0], "y": v.station.location[1]});
             bezier_stops[bezier_stops.length-1].push(v);
@@ -645,7 +657,7 @@ class TransitUI {
         }
 
         dfs(active_stop);
-        console.log(bezier_coordinates);
+        //console.log(bezier_coordinates);
 
         for (var i = 0; i < bezier_coordinates.length; i++) {
 
@@ -787,7 +799,7 @@ class TransitUI {
 
         // recursive DFS to find all the paths
         function dfs(v) {
-            console.log("DFS: node "+v.station.name);
+            //console.log("DFS: node "+v.station.name);
 
             stop_groups[stop_groups.length-1].push(v);
 
@@ -810,7 +822,7 @@ class TransitUI {
 
         dfs(active_stop);
 
-        console.log(stop_groups);
+        //console.log(stop_groups);
 
         $("#route-diagram").empty();
 
