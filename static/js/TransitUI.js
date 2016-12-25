@@ -11,6 +11,8 @@ class TransitUI {
         this.active_tool = "station";
         this.preview_paths_enabled = true;
 
+        this.moving_station_marker = null; // Station marker being dragged
+
         this.line_path_layer = L.featureGroup();
         this.station_marker_layer = L.featureGroup();
         this.preview_path_layer = L.featureGroup();
@@ -22,13 +24,20 @@ class TransitUI {
         this.map.addLayer(this.station_marker_layer);
 
         this.map.on('mouseup', () => {
-            console.log("map.dragging.enable");
             this.map.dragging.enable();
             this.map.removeEventListener('mousemove');
             this.preview_paths_enabled = true;
             this.map.on('mousemove', function(e) {
                 NS_interface.preview_handler(e);
             });
+            console.log("checking moving station");
+            if (this.moving_station_marker != null) {
+                this.update_station_info(this.moving_station_marker.station);
+                this.moving_station_marker.generate_popup();
+                this.moving_station_marker.marker.openPopup();
+                this.moving_station_marker = null;
+                this.update_line_diagram();
+            }
         });
 
         this.map.on('mousemove', function(e) {
@@ -91,14 +100,17 @@ class TransitUI {
         var line = new Line(0, this.new_line_name());
         line.full_name = "Line";
 
-        $.ajax({ url: "line-add?service-id="+NS_map.primary_service().id.toString()+"&name="+line.name,
+        var color = NS_interface.random_color();
+        line.color_bg = color.bg_hex();
+        line.color_fg = color.fg_hex();
+
+        console.log(line);
+
+        $.ajax({ url: "line-add?service-id="+NS_map.primary_service().id.toString()+"&name="+encodeURIComponent(line.name)+"&full-name="+encodeURIComponent(line.full_name)+"&color-bg="+encodeURIComponent(line.color_bg)+"&color-fg="+encodeURIComponent(line.color_fg),
             async: false,
             dataType: 'json',
             success: function(data, status) {
                 line.id = data["id"];
-                var color = NS_interface.random_color();
-                line.color_bg = color.bg_hex();
-                line.color_fg = color.fg_hex();
                 NS_map.primary_service().add_line(line);
                 NS_interface.add_to_line_selector(line);
                 NS_interface.update_line_selector(line.id);
@@ -120,6 +132,7 @@ class TransitUI {
         $("#color-picker-bg").spectrum("set", line.color_bg);
         $("#color-picker-fg").spectrum("set", line.color_fg);
         NS_interface.update_line_editor();
+        NS_interface.update_line_diagram();
     }
 
     update_line_editor() {
@@ -139,6 +152,10 @@ class TransitUI {
             var line = this.active_service.lines[i];
             $("#dropdown-line-menu").prepend("<li class=\"line-selector-item\"><a class=\"line-selector-option\" id=\""+line.id+"\" href=\"#\"> <div class=\"subway-line-long\" style=\"background-color: "+line.color_bg+"; color: "+line.color_fg+";\"><div class=\"content\">"+line.name+"</div></div> "+line.full_name+"</a></li>");
         }
+        $('#custom-line-marker').css('background-color', this.active_line.color_bg);
+        $('#custom-line-marker').css('color', this.active_line.color_fg);
+        $("#color-picker-bg").spectrum("set", this.active_line.color_bg);
+        $("#color-picker-fg").spectrum("set", this.active_line.color_fg);
     }
 
     line_editor_save() {
@@ -176,6 +193,12 @@ class TransitUI {
             this.update_line_selector(line.id);
             $("#"+line.id).html("<div class=\"subway-line-long\" style=\"background-color: "+line.color_bg+"; color: "+line.color_fg+";\"><div class=\"content\">"+line.name+"</div></div> "+line.full_name);
             this.draw_line(line);
+            $.ajax({ url: "line-update?service-id="+NS_map.primary_service().id.toString()+"&line-id="+encodeURIComponent(line.id)+"&name="+encodeURIComponent(line.name)+"&full-name="+encodeURIComponent(line.full_name)+"&color-bg="+encodeURIComponent(line.color_bg)+"&color-fg="+encodeURIComponent(line.color_fg),
+                async: false,
+                dataType: 'json',
+                success: function(data, status) {
+                }
+            });
         } else {
             $("#option-section-lines").animate({scrollTop: $('#option-section-lines').prop('scrollHeight')}, 1000);
         }
@@ -263,8 +286,8 @@ class TransitUI {
             //L.DomEvent.stop(event);
             NS_interface.preview_paths_enabled = false;
             NS_interface.preview_clear();
-            console.log("map.dragging.disable");
             NS_interface.map.dragging.disable();
+            NS_interface.moving_station_marker = station_marker;
             let {lat: circleStartingLat, lng: circleStartingLng} = station_marker.marker._latlng;
             let {lat: mouseStartingLat, lng: mouseStartingLng} = event.latlng;
 
@@ -282,16 +305,6 @@ class TransitUI {
                     NS_interface.draw_line(lines[i]);
                 }
             });
-        });
-
-        station_marker.marker.on('drag', function(e) {
-            console.log('marker drag event');
-        });
-        station_marker.marker.on('dragstart', function(e) {
-            console.log('marker dragstart event');
-        });
-        station_marker.marker.on('dragend', function(e) {
-            console.log('marker dragend event');
         });
 
         station_marker.marker.addTo(this.station_marker_layer);
@@ -368,6 +381,31 @@ class TransitUI {
         this.draw_line(line);
 
         this.update_line_diagram();
+    }
+
+    update_station_info(station) {
+        // Sync with server
+        var lat = station.location[0];
+        var lng = station.location[1];
+
+        $.ajax({ url: "lat-lng-info?lat="+lat+"&lng="+lng,
+            async: false,
+            dataType: 'json',
+            success: function(data, status) {
+
+                station.name = data["name"];
+                if ("locality" in data) {
+                    station.locality = data["locality"];
+                }
+                if ("neighborhood" in data) {
+                    station.neighborhood = data["neighborhood"];
+                }
+                if ("region" in data) {
+                    station.region = data["region"];
+                }
+
+            }
+        });
     }
 
     add_stop_to_station(id) {
@@ -658,7 +696,6 @@ class TransitUI {
 
         dfs(active_stop);
         //console.log(bezier_coordinates);
-
         for (var i = 0; i < bezier_coordinates.length; i++) {
 
             var spline = new BezierSpline({points: bezier_coordinates[i], sharpness: 0.6});
@@ -896,6 +933,10 @@ class TransitUI {
 
             }
         });
+    }
+
+    load_session(session_id) {
+
     }
 
 }

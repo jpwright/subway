@@ -69,6 +69,7 @@ class EdgePath {
     constructor(stop_points, control_points, color, opacity) {
         this.stop_points = stop_points;
         this.control_points = control_points;
+        this.custom_control_points = [];
         this.color = color;
         this.opacity = opacity;
         this.track_width = 6;

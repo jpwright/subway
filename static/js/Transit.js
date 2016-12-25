@@ -22,6 +22,16 @@ class Map {
     to_json() {
         return JSON.stringify(this);
     }
+
+    from_json(j) {
+        this.id = j.id;
+        this.services = [];
+        for (var i = 0; i < j.services.length; i++) {
+            var s = new Service(j.services[i].id, j.services[i].name);
+            s.from_json(j.services[i]);
+            this.add_service(s);
+        }
+    }
 }
 
 class Station {
@@ -54,6 +64,16 @@ class Station {
     to_json() {
         return JSON.stringify(this);
     }
+
+    from_json(j) {
+        this.id = j.id;
+        this.name = j.name;
+        this.location = [parseFloat(j.location[0]), parseFloat(j.location[1])];
+        this.streets = j.streets;
+        this.neighborhood = j.neighborhood;
+        this.locality = j.locality;
+        this.region = j.region;
+    }
 }
 
 class Stop {
@@ -71,6 +91,11 @@ class Stop {
 
     to_json() {
         return JSON.stringify(this);
+    }
+
+    from_json(j, service) {
+        this.id = j.id;
+        this.station = service.get_station_by_id(j.station_id);
     }
 }
 
@@ -262,6 +287,26 @@ class Line {
     to_json() {
         return JSON.stringify(this);
     }
+
+    from_json(j, service) {
+        this.id = j.id;
+        this.name = j.name;
+        this.full_name = j.full_name;
+        this.color_bg = j.color_bg;
+        this.color_fg = j.color_fg;
+        this.stops = [];
+        for (var i = 0; i < j.stops.length; i++) {
+            var s = new Stop(j.stops[i].id, service.get_station_by_id(j.stops[i].station_id));
+            s.from_json(j.stops[i], service);
+            this.add_stop(s);
+        }
+        this.edges = [];
+        for (var i = 0; i < j.edges.length; i++) {
+            var e = new Edge(j.edges[i].id, []);
+            e.from_json(j.edges[i], this);
+            this.add_edge(e);
+        }
+    }
 }
 
 class Edge {
@@ -304,6 +349,14 @@ class Edge {
 
     to_json() {
         return JSON.stringify(this);
+    }
+
+    from_json(j, line) {
+        this.id = j.id;
+        this.stops = [];
+        for (var i = 0; i < j.stop_ids.length; i++) {
+            this.stops.push(line.get_stop_by_id(j.stop_ids[i]));
+        }
     }
 }
 
@@ -366,5 +419,22 @@ class Service {
 
     to_json() {
         return JSON.stringify(this);
+    }
+
+    from_json(j) {
+        this.id = j.id;
+        this.name = j.name;
+        this.stations = [];
+        for (var i = 0; i < j.stations.length; i++) {
+            var s = new Station(j.stations[i].id, j.stations[i].name, j.stations[i].location);
+            s.from_json(j.stations[i]);
+            this.add_station(s);
+        }
+        this.lines = [];
+        for (var i = 0; i < j.lines.length; i++) {
+            var l = new Line(j.lines[i].id, j.lines[i].name);
+            l.from_json(j.lines[i], this);
+            this.add_line(l);
+        }
     }
 }
