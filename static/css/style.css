@@ -56,6 +56,12 @@ html, body {
 .station-popup .leaflet-popup-content {
     margin: 0px;
     padding-top: 10px;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+    -khtml-user-select: none; /* Konqueror */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none;
 }
 
 .station-popup .leaflet-popup-close-button {

@@ -3,6 +3,7 @@ var NS_session;
 var NS_map;
 var NS_service;
 var NS_interface;
+var NS_id = new IdFactory();
 
 function initialize_game_state() {
 
@@ -48,7 +49,8 @@ function initialize_game_state() {
             success: function(data, status) {
                 console.log(data.data);
                 NS_session = data.id;
-                NS_map = new Map(data.data.id);
+                NS_map = new Map();
+                NS_map.sid = data.data.id;
                 NS_map.from_json(data.data);
                 NS_interface.active_service = NS_map.primary_service();
                 NS_interface.active_line = NS_map.primary_service().lines[0];
@@ -86,7 +88,8 @@ function initialize_game_state() {
             async: false,
             dataType: 'json',
             success: function(data, status) {
-                NS_map = new Map(data["id"]);
+                NS_map = new Map();
+                NS_map.sid = data["id"];
             }
         });
 
@@ -95,7 +98,8 @@ function initialize_game_state() {
             async: false,
             dataType: 'json',
             success: function(data, status) {
-                var NS_service = new Service(data["id"], "MTA");
+                var NS_service = new Service("MTA");
+                NS_service.sid = data["id"];
                 NS_map.add_service(NS_service);
                 NS_interface.active_service = NS_map.primary_service();
                 NS_interface.active_line = NS_map.primary_service().lines[0];
@@ -156,6 +160,7 @@ $(function() {
             var station = NS_interface.active_service.get_station_by_id(station_id);
             station.name = newText;
             NS_interface.update_line_diagram();
+            NS_interface.sync_station_info(station);
         });
     });
     $(document).on('click', '.subway-clickable', function() {

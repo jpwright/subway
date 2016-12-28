@@ -18,7 +18,7 @@ import TransitGIS
 import ConfigParser
 
 app = Flask(__name__, static_url_path='/static')
-app.secret_key = 'F12Yr58j4yX T~Y%C!efD]Fxc/,?KT'
+app.secret_key = 'F12Yr58j4zX T~Y%C!efD]Fxc/,?KT'
 
 session_to_map = {}
 
@@ -173,6 +173,46 @@ def route_station_remove():
                     return station.to_json()
 
     return json.dumps({"error": "Invalid ID"})
+
+@app.route('/station-update')
+def route_station_update():
+    e = check_for_session_errors()
+    if e:
+        return e
+
+    service_id = request.args.get('service-id')
+    station_id = request.args.get('station-id')
+    name = request.args.get('name')
+    location = request.args.get('location')
+    streets = request.args.get('streets')
+    neighborhood = request.args.get('neighborhood')
+    locality = request.args.get('locality')
+    region = request.args.get('region')
+
+    m = session_to_map[session['id']]
+    for s in m.services:
+        if service_id == str(s.id):
+
+            # Look for matching station.
+            for station in s.stations:
+                if station_id == str(station.id):
+                    if name != None:
+                        station.name = name
+                    if location != None:
+                        location_comps = location.split(',')
+                        station.location = [float(location_comps[0]), float(location_comps[1])]
+                    if streets != None:
+                        street_comps = streets.split(',')
+                        station.streets = street_comps
+                    if neighborhood != None:
+                        station.neighborhood = neighborhood
+                    if locality != None:
+                        station.locality = locality
+                    if region != None:
+                        station.region = region
+
+    return json.dumps({"error": "Invalid ID"})
+
 
 @app.route('/stop-add')
 def route_stop_add():

@@ -10,7 +10,7 @@ class StationMarker {
 
     generate_marker() {
         var latlng = L.latLng(this.station.location[0], this.station.location[1]);
-        var marker = L.circleMarker(latlng, {draggable: false, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT);
+        var marker = L.circleMarker(latlng, {draggable: true, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT);
 
         return marker;
     }
@@ -60,16 +60,37 @@ class BezierControlPoint {
 class LinePath {
 
     constructor() {
+        this.raw_edge_paths = [];
         this.edge_paths = [];
+    }
+
+    get_path_for_edge(edge) {
+        for (var i = 0; i < this.edge_paths.length; i++) {
+            if (this.edge_paths[i].edge_id == edge.id) {
+                return this.edge_paths[i];
+            }
+        }
+        return null;
+    }
+
+    get_raw_path_for_edge(edge) {
+        for (var i = 0; i < this.raw_edge_paths.length; i++) {
+            if (this.raw_edge_paths[i].edge_id == edge.id) {
+                return this.raw_edge_paths[i];
+            }
+        }
+        return null;
     }
 }
 
 class EdgePath {
 
-    constructor(stop_points, control_points, color, opacity) {
+    constructor(edge_id, stop_points, control_points, offset, color, opacity) {
+        this.edge_id = edge_id;
         this.stop_points = stop_points;
         this.control_points = control_points;
         this.custom_control_points = [];
+        this.offset = offset;
         this.color = color;
         this.opacity = opacity;
         this.track_width = 6;
@@ -78,23 +99,31 @@ class EdgePath {
 
     generate_path(color, opacity) {
 
-        if (this.control_points.length == 2) {
+        if (this.control_points.length == 0) {
+            var path = L.polyline([L.latLng(this.stop_points[0][0], this.stop_points[0][1]), L.latLng(this.stop_points[1][0], this.stop_points[1][1])], {weight: this.track_width, color: color, opacity: opacity});
+        } else {
             var bezier_options = [
                                     'M',
-                                    [this.stop_points[0][0], this.stop_points[0][1]],
-                                    'C',
-                                    [this.control_points[0].lng, this.control_points[0].lat],
-                                    [this.control_points[1].lng, this.control_points[1].lat],
-                                    [this.stop_points[1][0], this.stop_points[1][1]]
+                                    [this.stop_points[0][0], this.stop_points[0][1]]
                                 ];
-
-            var curve_options = {"color": color, "weight": this.track_width, "opacity": opacity, "fill": false, "smoothFactor": 1.0, "offset": 0, "clickable": false, "pointer-events": "none", "className": "no-hover"};
-
+            for (var i = 0; i < this.control_points.length; i++) {
+                //console.log(this.control_points);
+                //console.log(this.stop_points);
+                var new_options = ['C',
+                                    [this.control_points[i][0].lng, this.control_points[i][0].lat],
+                                    [this.control_points[i][1].lng, this.control_points[i][1].lat],
+                                    [this.stop_points[i+1][0], this.stop_points[i+1][1]]
+                                ];
+                bezier_options.push.apply(bezier_options, new_options);
+            }
+            var curve_options = {"color": color, "weight": this.track_width, "opacity": opacity, "fill": false, "smoothFactor": 1.0, "offset": this.offset*(this.track_width/2), "clickable": false, "pointer-events": "none", "className": "no-hover"};
             var path = L.curve(bezier_options, curve_options);
-        } else {
-            var path = L.polyline([L.latLng(this.stop_points[0][0], this.stop_points[0][1]), L.latLng(this.stop_points[1][0], this.stop_points[1][1])], {weight: this.track_width, color: color, opacity: opacity});
         }
         return path;
+    }
+
+    regenerate_path() {
+        this.path = this.generate_path(this.color, this.opacity);
     }
 }
 
