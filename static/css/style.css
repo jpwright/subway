@@ -216,8 +216,20 @@ textarea.station-name-edit {
     white-space: nowrap;
 }
 
-.subway-line-marker-diagram {
-    margin-left: 5px;
+.subway-line-mini.subway-line-long.subway-line-marker-diagram {
+    margin-left: 2px;
+    top: 0em;
+}
+
+.subway-line-mini.subway-line-long.subway-line-marker-diagram.subway-line-marker-diagram-fake {
+    width: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.subway-line-mini.subway-line-long.subway-line-marker-diagram.subway-line-marker-diagram-fake .content {
+    width: 0;
 }
 
 .subway-clickable {
@@ -388,7 +400,9 @@ textarea.station-name-edit {
 
 .route-diagram-stop {
     position: relative;
-    height: 20px;
+    clear: both;
+    width: 100%;
+    line-height: 1.8em;
 }
 
 .route-diagram-station-marker {
@@ -398,25 +412,55 @@ textarea.station-name-edit {
     border-radius: 0.5em;
     border: 0.25em solid black;
     background-color: white;
+    position: absolute;
+    top: 0.3em;
+    left: 0.5em;
+}
+
+.route-diagram-stop-name {
+    float: left;
+    margin-left: 2em;
     margin-right: 0.5em;
-    margin-left: 0.5em;
+}
+
+.route-diagram-stop-connectors {
+    display: table-cell;
+    width: 100%;
+}
+
+.route-diagram-branch {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+}
+
+.route-diagram-branch-connectors {
+    position: absolute;
+    height: 100%;
 }
 
 .route-diagram-connector {
     position: absolute;
     float: left;
-    height: 0.45em;
+    height: 100%;
     width: 0.4em;
-    left: 0.8em;
-    top: 1.05em;
+    left: 0.85em;
+    top: 1.25em;
 }
 
 .route-diagram-connector-branch {
     position: absolute;
     float: left;
     width: 0.4em;
-    left: -0.1em;
-    top: 1.05em;
+    height: 100%;
+    padding-top: 0.5em;
+    padding-bottom: 0.8em;
+}
+
+.route-diagram-connector-internal {
+    height: 100%;
+    width: 100%;
+    float: left;
 }
 
 .route-diagram-connector-top-joint {
@@ -424,7 +468,7 @@ textarea.station-name-edit {
     float: left;
     height: 0.4em;
     width: 0.8em;
-    left: -0.1em;
+    top: 0.5em;
     border-radius: 0.4em;
 }
 
@@ -433,8 +477,7 @@ textarea.station-name-edit {
     float: left;
     height: 0.4em;
     width: 0.8em;
-    left: -0.1em;
-    top: 0.35em;
+    bottom: 0.8em;
     border-radius: 0.4em;
 }
 

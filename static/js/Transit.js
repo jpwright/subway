@@ -49,8 +49,12 @@ class Station {
      *  region: The name of the state the Station is in.
      */
 
-    constructor(name, location) {
-        this.id = NS_id.id();
+    constructor(name, location, preview) {
+        if (preview === undefined || preview == false) {
+            this.id = NS_id.id();
+        } else {
+            this.id = 0;
+        }
         this.sid = 0;
         this.name = name;
         this.location = location;
@@ -87,8 +91,12 @@ class Stop {
      *  station: The Station this stop is contained within.
      */
 
-    constructor(station) {
-        this.id = NS_id.id();
+    constructor(station, preview) {
+        if (preview === undefined || preview == false) {
+            this.id = NS_id.id();
+        } else {
+            this.id = 0;
+        }
         this.sid = 0;
         this.station = station;
     }
@@ -355,7 +363,8 @@ class Line {
         this.color_fg = j.color_fg;
         this.stops = [];
         for (var i = 0; i < j.stops.length; i++) {
-            var s = new Stop(j.stops[i].id, service.get_station_by_sid(j.stops[i].station_id));
+            var s = new Stop(service.get_station_by_sid(j.stops[i].station_id));
+            s.sid = j.stops[i].id;
             s.from_json(j.stops[i], service);
             this.add_stop(s);
         }
@@ -378,8 +387,12 @@ class Edge {
      *  path: An EdgePath used to represent this edge.
      */
 
-    constructor(stops) {
-        this.id = NS_id.id();
+    constructor(stops, preview) {
+        if (preview === undefined || preview == false) {
+            this.id = NS_id.id();
+        } else {
+            this.id = 0;
+        }
         this.stops = stops;
         this.path = null;
     }

@@ -193,7 +193,7 @@ class TransitUI {
             this.update_line_selector(line.id);
             $("#"+line.id).html("<div class=\"subway-line-long\" style=\"background-color: "+line.color_bg+"; color: "+line.color_fg+";\"><div class=\"content\">"+line.name+"</div></div> "+line.full_name);
             this.draw_line(line);
-            $.ajax({ url: "line-update?service-id="+NS_map.primary_service().sid.toString()+"&line-id="+encodeURIComponent(line.id)+"&name="+encodeURIComponent(line.name)+"&full-name="+encodeURIComponent(line.full_name)+"&color-bg="+encodeURIComponent(line.color_bg)+"&color-fg="+encodeURIComponent(line.color_fg),
+            $.ajax({ url: "line-update?service-id="+NS_map.primary_service().sid.toString()+"&line-id="+encodeURIComponent(line.sid)+"&name="+encodeURIComponent(line.name)+"&full-name="+encodeURIComponent(line.full_name)+"&color-bg="+encodeURIComponent(line.color_bg)+"&color-fg="+encodeURIComponent(line.color_fg),
                 async: false,
                 dataType: 'json',
                 success: function(data, status) {
@@ -428,12 +428,12 @@ class TransitUI {
             return;
         }
 
+
+        var stop = new Stop(station);
         $.ajax({ url: "stop-add?service-id="+this.active_service.sid.toString()+"&line-id="+this.active_line.sid.toString()+"&station-id="+station.sid.toString(),
             async: false,
             dataType: 'json',
             success: function(data, status) {
-
-                stop = new Stop(station);
                 stop.sid = data["id"];
 
             }
@@ -454,7 +454,6 @@ class TransitUI {
                     dataType: 'json',
                     success: function(data, status) {
                         best_edges[i].sid = data.id;
-                        NS_interface.draw_line(NS_interface.active_line);
                     }
                 });
             }
@@ -475,6 +474,7 @@ class TransitUI {
             }
         }
 
+        this.draw_line(this.active_line);
         this.update_line_diagram();
 
     }
@@ -878,8 +878,8 @@ class TransitUI {
         this.preview_clear();
 
         // Create dummy station and stop
-        var station = new Station("preview", [lat, lng]);
-        var stop = new Stop(station);
+        var station = new Station("preview", [lat, lng], true);
+        var stop = new Stop(station, true);
 
         // Get the EdgeDelta from this new stop
         var delta = this.get_insertion_result(line, stop);
@@ -969,6 +969,7 @@ class TransitUI {
         }
 
         var stop_groups = [[]];
+        var branch_pos = [];
 
         // recursive DFS to find all the paths
         function dfs(v) {
@@ -986,6 +987,7 @@ class TransitUI {
                         // Expand the arrays to start a new path.
                         stop_groups.push([]);
                         stop_groups[stop_groups.length-1].push(v);
+                        branch_pos.push(v.id);
                     }
                     new_neighbor_count += 1;
                     dfs(w);
@@ -1004,6 +1006,12 @@ class TransitUI {
         var stop_index = 0;
         var stop_position = {}; // stop id :: position in route diagram list
 
+        var branch_div = $('<div class="route-diagram-branch"></div>');
+        $("#route-diagram").append(branch_div);
+
+        console.log(stop_groups);
+        console.log(branch_pos);
+
         for (var i = 0; i < stop_groups.length; i++) {
             var stop_group = stop_groups[i];
 
@@ -1013,30 +1021,43 @@ class TransitUI {
                 start_index = 1;
             }
 
+
             for (var j = start_index; j < stop_group.length; j++) {
                 var stop = stop_group[j];
-                var stop_div = $('<div class="route-diagram-stop"></div>');
-                $("#route-diagram").append(stop_div);
-                stop_div.append('<div class="route-diagram-station-marker"></div>');
 
                 // Add a leading connector if this is the start of a branch.
-                if (j == start_index && i > 0) {
-                    var connector_height = (stop_index - stop_position[stop_group[0].id])*20;
-                    stop_div.append('<div class="route-diagram-connector-top-joint" style="background-color: '+line.color_bg+'; top: -'+(connector_height-5).toString()+'px;"></div>');
-                    stop_div.append('<div class="route-diagram-connector-branch" style="background-color: '+line.color_bg+'; height: '+connector_height.toString()+'px; top: -'+(connector_height-10).toString()+'px;"></div>');
-                    stop_div.append('<div class="route-diagram-connector-bottom-joint" style="background-color: '+line.color_bg+';"></div>');
+                if (j == start_index+1 && i > 0) {
+                    branch_div = $('<div class="route-diagram-branch"></div>');
+                    $("#route-diagram").append(branch_div);
                 }
+                console.log(stop.id);
+                if (branch_pos.indexOf(stop.id) > -1) {
+                    branch_div = $('<div class="route-diagram-branch"></div>');
+                    $("#route-diagram").append(branch_div);
+                    var connector_div = $('<div class="route-diagram-branch-connectors"></div>');
+                    branch_div.append(connector_div);
+                    connector_div.append('<div class="route-diagram-connector-top-joint" style="background-color: '+line.color_bg+';"></div>');
+                    connector_div.append('<div class="route-diagram-connector-branch"><div class="route-diagram-connector-internal" style="background-color: '+line.color_bg+';"></div></div>');
+                    connector_div.append('<div class="route-diagram-connector-bottom-joint" style="background-color: '+line.color_bg+';"></div>');
+                }
+
+                var stop_div = $('<div class="route-diagram-stop"></div>');
+                branch_div.append(stop_div);
+                stop_div.append('<div class="route-diagram-station-marker"></div>');
 
                 // Add a trailing connector if this isn't the end of a branch.
                 if (j != stop_group.length - 1) {
                     stop_div.append('<div class="route-diagram-connector" style="background-color: '+line.color_bg+'"></div>');
                 }
-                stop_div.append(stop.station.name);
-
+                stop_div.append('<div class="route-diagram-stop-name">'+stop.station.name+'</div>');
+                var stop_connectors = $('<div class="route-diagram-stop-connectors"></div>');
+                stop_div.append(stop_connectors);
+                // Add an empty connector just to make sure each stop row has the height it needs
+                stop_connectors.append('<div class="subway-line-long subway-line-mini subway-line-marker-diagram subway-line-marker-diagram-fake" style="font-size: 1em;"><div class="content"></div></div>');
                 for (var k = 0; k < this.active_service.lines.length; k++) {
                     if (this.active_service.lines[k].id != line.id) {
                         if (this.active_service.lines[k].has_station(stop.station)) {
-                            stop_div.append('<div class="subway-line-long subway-line-marker-diagram" style="font-size: 1em; background-color: '+this.active_service.lines[k].color_bg+'; color: '+this.active_service.lines[k].color_fg+';"><div class="content">'+this.active_service.lines[k].name+'</div></div>');
+                            stop_connectors.append('<div class="subway-line-long subway-line-mini subway-line-marker-diagram" style="font-size: 1em; background-color: '+this.active_service.lines[k].color_bg+'; color: '+this.active_service.lines[k].color_fg+';"><div class="content">'+this.active_service.lines[k].name+'</div></div>');
                         }
                     }
                 }
