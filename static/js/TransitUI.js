@@ -994,6 +994,20 @@ class TransitUI {
         }
         return null;
     }
+    
+    get_station_pairs(station) {
+        var station_pairs = [];
+        for (var i = 0; i < this.station_pairs.length; i++) {
+            var station_pair = this.station_pairs[i];
+            if (station_pair.stations[0] == station) {
+                station_pairs.push([station_pair, 0]);
+            }
+            if (station_pair.stations[1] == station) {
+                station_pairs.push([station_pair, 1]);
+            }
+        }
+        return station_pairs;
+    }
 
     draw_line(line, btf) {
         //console.log("draw line "+line.name);
@@ -1141,7 +1155,7 @@ class TransitUI {
             }
             if (this.active_tool == "line") {
                 if (this.active_line != null) {
-                    //this.preview_station(this.active_line, e.latlng.lat, e.latlng.lng);
+                    //this.preview_station(e.latlng.lat, e.latlng.lng);
                     this.preview_station_pair(e.latlng.lat, e.latlng.lng);
                 }
             }
@@ -1188,7 +1202,7 @@ class TransitUI {
                 markers[i].marker.on('mousedown', function (event) {
                     NS_interface.preview_paths_enabled = false;
                     console.log("clicked control point");
-                    NS_interface.moving_control_point = markers[i];
+                    NS_interface.moving_control_point = this;
             
                     NS_interface.map.dragging.disable();
                     let {lat: circleStartingLat, lng: circleStartingLng} = this._latlng;
@@ -1201,7 +1215,7 @@ class TransitUI {
                         let lngDifference = mouseStartingLng - mouseNewLng;
 
                         let center = [circleStartingLat-latDifference, circleStartingLng-lngDifference];
-                        NS_interface.moving_control_point.marker.setLatLng(center);
+                        NS_interface.moving_control_point.setLatLng(center);
                         NS_interface.move_control_point(best_pair, 0, center);
                     });
                 });
@@ -1215,7 +1229,7 @@ class TransitUI {
         station_pair.user_control_points[i] = new BezierControlPoint(location[0], location[1]);
     }
 
-    preview_station(line, lat, lng) {
+    preview_station(lat, lng) {
         this.preview_clear();
 
         var turf_e = {"type": "Feature", "properties": {}, "geometry": { "type": "Point", "coordinates": [lng, lat]}};
@@ -1224,8 +1238,8 @@ class TransitUI {
         
         var best_distance = 0;
         var best_station = null;
-        for (var i = 0; i < line.stops.length; i++) {
-            var station = line.stops[i].station;
+        for (var i = 0; i < NS_interface.active_service.stations.length; i++) {
+            var station = NS_interface.active_service.stations[i];
 
             var turf_s = {"type": "Feature", "properties": {}, "geometry": { "type": "Point", "coordinates": [station.location[1], station.location[0]]}};
             var distance = turf.distance(turf_e, turf_s, "miles");
@@ -1242,6 +1256,49 @@ class TransitUI {
             var station_highlight = L.circleMarker([best_station.location[0], best_station.location[1]], {radius: 10, color: "#A77"});
             this.preview_paths.push(station_highlight);
             this.preview_path_layer.addLayer(station_highlight);
+            
+            // Get station pairs containing this station
+            var station_pairs = this.get_station_pairs(best_station);
+            for (var i = 0; i < station_pairs.length; i++) {
+                var pair = station_pairs[i][0];
+                var pair_highlight = pair.average_path();
+                this.preview_path_layer.addLayer(pair_highlight);
+                
+                var markers = pair.markers();
+                for (var j = 0; j < markers.length; j++) {
+                    markers[j].marker.on('click', function(e) {
+                        NS_interface.preview_paths_enabled = false;
+                        // Disable new station creation.
+                        NS_interface.map.off('click', handle_map_click);
+                        setTimeout(function() {
+                            NS_interface.map.on('click', handle_map_click);
+                        }, 1000);
+
+                    });
+                    markers[j].marker.on('mousedown', function (event) {
+                        NS_interface.preview_paths_enabled = false;
+                        console.log("clicked control point");
+                        NS_interface.moving_control_point = markers[j];
+                
+                        NS_interface.map.dragging.disable();
+                        let {lat: circleStartingLat, lng: circleStartingLng} = this._latlng;
+                        let {lat: mouseStartingLat, lng: mouseStartingLng} = event.latlng;
+
+                        NS_interface.map.on('mousemove', function(event) {
+                            console.log("control point mousemove");
+                            let {lat: mouseNewLat, lng: mouseNewLng} = event.latlng;
+                            let latDifference = mouseStartingLat - mouseNewLat;
+                            let lngDifference = mouseStartingLng - mouseNewLng;
+
+                            let center = [circleStartingLat-latDifference, circleStartingLng-lngDifference];
+                            NS_interface.moving_control_point.marker.setLatLng(center);
+                            NS_interface.move_control_point(pair, 0, center);
+                        });
+                    });
+                    this.preview_paths.push(markers[j].marker);
+                    this.preview_path_layer.addLayer(markers[j].marker);
+                }
+            }
         }
 
         // Bring station layer to front.
