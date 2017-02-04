@@ -14,11 +14,12 @@ import sys
 sys.path.append(os.path.abspath('server/flask'))
 import Transit
 import TransitGIS
+import TransitModel
 
 import ConfigParser
 
 app = Flask(__name__, static_url_path='/static')
-app.secret_key = 'F12Yr58j4zX T~Y%C!efJ]Fxd/,?KT'
+app.secret_key = 'F12Yr58j4zX T~Y%C!efJ]Gxd/,?KT'
 
 session_to_map = {}
 
@@ -40,7 +41,7 @@ def route_session_status():
         # Get a new session ID
         session['id'] = '{:16x}'.format(uuid.uuid4().int & (1<<63)-1)
         # Create a new Map object and keep it
-        session_to_map[session['id']] = Transit.Map()
+        session_to_map[session['id']] = Transit.Map(0)
 
     return json.dumps({"id": session['id']})
 
@@ -68,7 +69,7 @@ def route_session_save():
     cursor = conn.cursor()
 
     sid = int(session['id'], 16)
-    sdata = session_to_map[session['id']].to_json()
+    sdata = session_to_map[session['id']].to_json().replace("'", "''")
     sdt = datetime.datetime.now()
 
     cursor.execute("SELECT id FROM sessions WHERE id = %s LIMIT 1" % (sid))
@@ -102,22 +103,12 @@ def route_session_load():
     if (cursor.rowcount > 0):
         row = cursor.fetchone()
         sdata = row[0]
-        m = Transit.Map()
+        m = Transit.Map(0)
         m.from_json(sdata)
+        m.regenerate_all_ids()
         session_to_map[session['id']] = m
 
-    return json.dumps({"id": session['id'], "data": sdata})
-
-@app.route('/hexagons')
-def route_hexagons():
-
-    lat = request.args.get('lat')
-    lng = request.args.get('lng')
-    distance = request.args.get('distance')
-
-    hexagons = TransitGIS.hexagons(lat, lng, distance)
-
-    return json.dumps(hexagons)
+    return json.dumps({"id": session['id'], "data": m.to_json().replace("'", "''")})
 
 @app.route('/station-add')
 def route_station_add():
@@ -133,8 +124,8 @@ def route_station_add():
 
     m = session_to_map[session['id']]
     for service in m.services:
-        if service_id == str(service.id):
-            station = TransitGIS.station_constructor(lat, lng)
+        if service_id == str(service.sid):
+            station = TransitGIS.station_constructor(m.create_sid(), lat, lng)
             service.add_station(station)
             return station.to_json()
 
@@ -149,7 +140,7 @@ def route_lat_lng_info():
     lat = request.args.get('lat')
     lng = request.args.get('lng')
 
-    station = TransitGIS.station_constructor(lat, lng)
+    station = TransitGIS.station_constructor(0, lat, lng)
     return station.to_json()
 
 @app.route('/station-remove')
@@ -164,11 +155,11 @@ def route_station_remove():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching station.
             for station in s.stations:
-                if station_id == str(station.id):
+                if station_id == str(station.sid):
                     s.remove_station(station)
                     return station.to_json()
 
@@ -191,11 +182,11 @@ def route_station_update():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching station.
             for station in s.stations:
-                if station_id == str(station.id):
+                if station_id == str(station.sid):
                     if name != None:
                         station.name = name
                     if location != None:
@@ -227,17 +218,17 @@ def route_stop_add():
 
     m = session_to_map[session['id']]
     for service in m.services:
-        if service_id == str(service.id):
+        if service_id == str(service.sid):
             line_exists = False
             for line in service.lines:
-                if line_id == str(line.id):
+                if line_id == str(line.sid):
                     line_exists = True
                     line_to_use = line
 
             if (line_exists):
                 if service.has_station(int(station_id)):
                     station = service.find_station(int(station_id))
-                    stop = Transit.Stop(station.id)
+                    stop = Transit.Stop(m.create_sid(), station.sid)
                     line_to_use.add_stop(stop)
                     return stop.to_json()
 
@@ -257,13 +248,13 @@ def route_stop_remove():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching line.
             for line in s.lines:
-                if line_id == str(line.id):
+                if line_id == str(line.sid):
                     for stop in line.stops:
-                        if stop_id == str(stop.id):
+                        if stop_id == str(stop.sid):
                             line.remove_stop(stop)
                             return stop.to_json()
 
@@ -281,16 +272,16 @@ def route_line_add():
     color_bg = request.args.get('color-bg')
     color_fg = request.args.get('color-fg')
 
-    line = Transit.Line(name)
+    service_id = request.args.get('service-id')
+
+    m = session_to_map[session['id']]
+    line = Transit.Line(m.create_sid(), name)
     line.full_name = full_name
     line.color_bg = color_bg
     line.color_fg = color_fg
 
-    service_id = request.args.get('service-id')
-
-    m = session_to_map[session['id']]
     for service in m.services:
-        if service_id == str(service.id):
+        if service_id == str(service.sid):
             service.add_line(line)
             return line.to_json()
 
@@ -311,11 +302,11 @@ def route_line_update():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching line.
             for line in s.lines:
-                if line_id == str(line.id):
+                if line_id == str(line.sid):
                     if name != None:
                         line.name = name
                     if full_name != None:
@@ -325,6 +316,25 @@ def route_line_update():
                     if color_fg != None:
                         line.color_fg = color_fg
 
+
+    return json.dumps({"error": "Invalid ID"})
+
+@app.route('/line-info')
+def route_line_info():
+    
+    e = check_for_session_errors()
+    if e:
+        return e
+
+    line_id = request.args.get('line-id')
+    line_name = request.args.get('line-name')
+    
+    sid = request.args.get('id')
+    m = session_to_map[session['id']]
+    for s in m.services:
+        for l in s.lines:
+            if line_id == str(l.sid) or line_name == l.name:
+                return s.line_to_json(l)
 
     return json.dumps({"error": "Invalid ID"})
 
@@ -345,12 +355,12 @@ def route_edge_add():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching line.
             line_exists = False
             for line in s.lines:
-                if line_id == str(line.id):
+                if line_id == str(line.sid):
                     line_exists = True
                     line_to_use = line
 
@@ -358,16 +368,16 @@ def route_edge_add():
             stops_found = 0
             if (line_exists):
                 for stop in line_to_use.stops:
-                    if stop_1_id == str(stop.id):
+                    if stop_1_id == str(stop.sid):
                         stop_1 = stop
                         stops_found += 1
-                    if stop_2_id == str(stop.id):
+                    if stop_2_id == str(stop.sid):
                         stop_2 = stop
                         stops_found += 1
 
             # Add the edge.
             if (stops_found == 2):
-                edge = Transit.Edge([stop_1_id, stop_2_id])
+                edge = Transit.Edge(m.create_sid(), [stop_1_id, stop_2_id])
                 line_to_use.add_edge(edge)
                 return edge.to_json()
 
@@ -386,13 +396,13 @@ def route_edge_remove():
 
     m = session_to_map[session['id']]
     for s in m.services:
-        if service_id == str(s.id):
+        if service_id == str(s.sid):
 
             # Look for matching line.
             for line in s.lines:
-                if line_id == str(line.id):
+                if line_id == str(line.sid):
                     for edge in line.edges:
-                        if edge_id == str(edge.id):
+                        if edge_id == str(edge.sid):
                             line.remove_edge(edge)
                             return edge.to_json()
 
@@ -407,8 +417,9 @@ def route_service_add():
 
     name = request.args.get('name')
 
-    service = Transit.Service(name)
     m = session_to_map[session['id']]
+    
+    service = Transit.Service(m.create_sid(), name)
     m.add_service(service)
 
     return service.to_json()
@@ -423,7 +434,7 @@ def route_service_info():
     id = request.args.get('id')
     m = session_to_map[session['id']]
     for s in m.services:
-        if id == str(s.id):
+        if id == str(s.sid):
             return s.to_json()
 
     return json.dumps({"error": "Invalid ID"})
@@ -441,12 +452,47 @@ def route_map_info():
 @app.route('/graphviz')
 def route_graphviz():
     return app.send_static_file('graphviz.html')
-
-@app.route('/station-info')
-def station_info():
+    
+@app.route('/hexagons')
+def route_hexagons():
 
     lat = request.args.get('lat')
     lng = request.args.get('lng')
+    distance = request.args.get('distance')
+
+    hexagons = TransitGIS.hexagons(lat, lng, distance)
+
+    return json.dumps(hexagons)
+
+@app.route('/get-hexagons')
+def route_get_hexagons():
+    
+    e = check_for_session_errors()
+    if e:
+        return e
+    
+    m = session_to_map[session['id']]
+    bb = TransitGIS.BoundingBox(m)
+    bb.min_lat -= 0.02;
+    bb.max_lat += 0.02;
+    bb.min_lng -= 0.02;
+    bb.max_lng += 0.02;
+    
+    hexagons = TransitGIS.hexagons_bb(bb)
+    return hexagons.to_json()
+
+@app.route('/transit-model')
+def route_transit_model():
+    
+    e = check_for_session_errors()
+    if e:
+        return e
+    
+    m = session_to_map[session['id']]
+    model = TransitModel.map_analysis(m)
+    
+    return model.to_json()
+    
 
 def check_for_session_errors():
     if 'id' not in session:

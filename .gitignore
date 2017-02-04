@@ -10,3 +10,4 @@ venv/*
 *.kate-swp
 *.pyc
 server/vm_setup.sh
+*.csv

@@ -45,13 +45,16 @@ function initialize_game_state() {
         // Initialize session and map
         $.ajax({ url: "session-load?id="+session_id,
             async: false,
-            dataType: 'json',
             success: function(data, status) {
-                console.log(data.data);
-                NS_session = data.id;
+                console.log(data);
+                var j = JSON.parse(data);
+                console.log(j);
+                var jdata = JSON.parse(j.data);
+                console.log(jdata);
+                NS_session = j.id;
                 NS_map = new Map();
-                NS_map.sid = data.data.id;
-                NS_map.from_json(data.data);
+                NS_map.sid = jdata.sid;
+                NS_map.from_json(jdata);
                 NS_interface.active_service = NS_map.primary_service();
                 NS_interface.active_line = NS_map.primary_service().lines[0];
                 NS_interface.update_line_selector(NS_interface.active_line.id);
@@ -64,8 +67,14 @@ function initialize_game_state() {
                 }
                 for (var i = 0; i < NS_map.primary_service().lines.length; i++) {
                     var line = NS_map.primary_service().lines[i];
-                    NS_interface.draw_line(line);
+                    NS_interface.update_edge_paths(line);
                 }
+                for (var i = 0; i < NS_map.primary_service().lines.length; i++) {
+                    var line = NS_map.primary_service().lines[i];
+                    NS_interface.draw_line(line, false);
+                }
+                NS_interface.station_marker_layer.bringToFront();
+                NS_interface.map.closePopup();
             }
         });
     } else {
@@ -89,7 +98,7 @@ function initialize_game_state() {
             dataType: 'json',
             success: function(data, status) {
                 NS_map = new Map();
-                NS_map.sid = data["id"];
+                NS_map.sid = data["sid"];
             }
         });
 
@@ -99,7 +108,7 @@ function initialize_game_state() {
             dataType: 'json',
             success: function(data, status) {
                 var NS_service = new Service("MTA");
-                NS_service.sid = data["id"];
+                NS_service.sid = data["sid"];
                 NS_map.add_service(NS_service);
                 NS_interface.active_service = NS_map.primary_service();
                 NS_interface.active_line = NS_map.primary_service().lines[0];

@@ -25,11 +25,11 @@ class Map {
     }
 
     from_json(j) {
-        this.sid = j.id;
+        this.sid = j.sid;
         this.services = [];
         for (var i = 0; i < j.services.length; i++) {
             var s = new Service(j.services[i].name);
-            s.sid = j.services[i].id;
+            s.sid = j.services[i].sid;
             s.from_json(j.services[i]);
             this.add_service(s);
         }
@@ -62,6 +62,7 @@ class Station {
         this.neighborhood = "";
         this.locality = "";
         this.region = "";
+        this.ridership = 0;
     }
 
     move_to(lat, lng) {
@@ -73,7 +74,7 @@ class Station {
     }
 
     from_json(j) {
-        this.sid = j.id;
+        this.sid = j.sid;
         this.name = j.name;
         this.location = [parseFloat(j.location[0]), parseFloat(j.location[1])];
         this.streets = j.streets;
@@ -106,8 +107,12 @@ class Stop {
     }
 
     from_json(j, service) {
-        this.sid = j.id;
+        this.sid = j.sid;
         this.station = service.get_station_by_sid(j.station_id);
+        if (this.station == undefined) {
+            console.log("FUCK");
+            console.log(j);
+        }
     }
 }
 
@@ -185,6 +190,7 @@ class Line {
     }
 
     has_station(station) {
+        
         for (var i = 0; i < this.stops.length; i++) {
             if (this.stops[i].station.id == station.id) {
                 return true;
@@ -202,6 +208,15 @@ class Line {
         if (edge_index > -1) {
             this.edges.splice(edge_index, 1);
         }
+    }
+    
+    has_edge(edge) {
+        for (var i = 0; i < this.edges.length; i++) {
+            if (this.edges[i].id == edge.id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     get_edge_by_id(id) {
@@ -356,7 +371,7 @@ class Line {
     }
 
     from_json(j, service) {
-        this.sid = j.id;
+        this.sid = j.sid;
         this.name = j.name;
         this.full_name = j.full_name;
         this.color_bg = j.color_bg;
@@ -364,14 +379,14 @@ class Line {
         this.stops = [];
         for (var i = 0; i < j.stops.length; i++) {
             var s = new Stop(service.get_station_by_sid(j.stops[i].station_id));
-            s.sid = j.stops[i].id;
+            s.sid = j.stops[i].sid;
             s.from_json(j.stops[i], service);
             this.add_stop(s);
         }
         this.edges = [];
         for (var i = 0; i < j.edges.length; i++) {
             var e = new Edge([]);
-            e.sid = j.edges[i].id;
+            e.sid = j.edges[i].sid;
             e.from_json(j.edges[i], this);
             this.add_edge(e);
         }
@@ -413,6 +428,14 @@ class Edge {
             return false;
         }
     }
+    
+    has_station(station) {
+        if (this.stops[0].station.id == station.id || this.stops[1].station.id == station.id) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     compare_stops(s) {
         if (s[0].id == this.stops[0].id && s[1].id == this.stops[1].id) return 1;
@@ -425,7 +448,7 @@ class Edge {
     }
 
     from_json(j, line) {
-        this.sid = j.id;
+        this.sid = j.sid;
         this.stops = [];
         for (var i = 0; i < j.stop_ids.length; i++) {
             this.stops.push(line.get_stop_by_sid(j.stop_ids[i]));
@@ -508,6 +531,80 @@ class Service {
         }
         return lines;
     }
+    
+    station_drawmap(line) {
+        var outer_stops = line.outer_stops();
+        var start_stop = outer_stops[0];
+        
+        var dfs_stops = [[]];
+        var dfs_branch = [];
+        var visited = {};
+
+        var max_depth = 10;
+
+        function dfs(v, sv, l, a) {
+            
+            //console.log(v.station.name);
+            
+            // Add new stop.
+            dfs_stops[dfs_stops.length-1].push(v.station);
+            a += 1;
+
+            visited[v.id] = 1;
+            var neighbors = line.neighbors(v);
+            var new_neighbor_count = 0;
+            
+            dfs_branch = dfs_stops[dfs_stops.length-1];
+            var current_branch_length = dfs_branch.length;
+            
+            var branch_count = 0;
+            for (var i = 0; i < neighbors.length; i++) {
+                
+                var w = neighbors[i];
+                if (!visited[w.id]) {
+                    // Get the drawmaps for the current stop pair.
+                    var drawmaps = sv.drawmap(v, w, l);
+                    drawmaps.sort(function(x,y) { return x.stops.length < y.stops.length; });
+                    var drawmap_found = false;
+                    for (var k = 0; k < drawmaps.length; k++) {
+                        var drawmap = drawmaps[k];
+                        // Only want drawmaps on a different line.
+                        if (drawmap.line != l && !drawmap_found) {
+                            // We only want to add one drawmap.
+                            drawmap_found = true;
+                            for (var j = 1; j < drawmap.stops.length - 1; j++) {
+                                dfs_stops[dfs_stops.length-1].push(drawmap.stops[j].station);
+                                a += 1;
+                            }
+                        }
+                    }
+                    if (new_neighbor_count > 0) {
+                        //console.log("second neighbor. branch_count="+branch_count.toString());
+                        // Expand the DFS arrays to start a new path.
+                        //console.log("current branch length: "+current_branch_length.toString());
+                        dfs_stops.push(dfs_branch.slice(0, current_branch_length));
+                        branch_count = 0;
+                        var ret = dfs(w, sv, l, branch_count);
+                        //console.log("ret: "+ret.toString());
+                        a += ret;
+                        branch_count += ret;
+                    } else {
+                        //console.log("first neighbor. branch_count="+branch_count.toString());
+                        var ret = dfs(w, sv, l, branch_count);
+                        //console.log("ret: "+ret.toString());
+                        a += ret;
+                        branch_count += ret;
+                    }
+                    new_neighbor_count += 1;
+                }
+            }
+            return a;
+        }
+        
+        dfs(start_stop, this, line, 0);
+        
+        return dfs_stops;
+    }
 
     drawmap(stop_1, stop_2, line) {
         // For stop 1 and 2 connected by line,
@@ -518,7 +615,7 @@ class Service {
         var dfs_path_found = false;
         var visited = {};
 
-        var max_depth = 8;
+        var max_depth = 10;
 
         // recursive DFS to find all the paths
         function dfs(v, target, l) {
@@ -546,7 +643,7 @@ class Service {
         }
 
         var lines_to_check = this.station_lines(stop_1.station);
-        var drawmaps = [new Drawmap(line, [stop_1.station, stop_2.station])];
+        var drawmaps = [new Drawmap(line, [stop_1, stop_2])];
 
         for (var i = 0; i < lines_to_check.length; i++) {
             var line_to_check = lines_to_check[i];
@@ -593,14 +690,14 @@ class Service {
         this.stations = [];
         for (var i = 0; i < j.stations.length; i++) {
             var s = new Station(j.stations[i].name, j.stations[i].location);
-            s.sid = j.stations[i].id;
+            s.sid = j.stations[i].sid;
             s.from_json(j.stations[i]);
             this.add_station(s);
         }
         this.lines = [];
         for (var i = 0; i < j.lines.length; i++) {
             var l = new Line(j.lines[i].name);
-            l.sid = j.lines[i].id;
+            l.sid = j.lines[i].sid;
             l.from_json(j.lines[i], this);
             this.add_line(l);
         }
