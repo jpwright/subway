@@ -14,6 +14,7 @@ class TransitUI {
 
         this.moving_station_marker = null; // Station marker being dragged
         this.moving_control_point = null;
+        this.moving_control_point_index = null;
 
         this.line_path_layer = L.featureGroup();
         this.station_marker_layer = L.featureGroup();
@@ -290,6 +291,7 @@ class TransitUI {
         this.station_markers.push(station_marker);
 
         station_marker.marker.on('click', function(e) {
+            station_marker.marker.closeTooltip();
             // Disable new station creation.
             NS_interface.map.off('click', handle_map_click);
             setTimeout(function() {
@@ -1172,36 +1174,45 @@ class TransitUI {
             // Create pair highlighter
             var pair_highlight = best_pair.average_path();
             this.preview_path_layer.addLayer(pair_highlight);
-            for (var i = 0; i < best_pair.line_control_points.length; i++) {
-                var lcp = best_pair.line_control_points[i];
-                for (var j = 0; j < lcp.control_points.length; j++) {
-                    var marker = lcp.control_points[j].marker();
-                    marker.on('mousedown', function (event) {
-                        console.log("clicked control point");
-                        //L.DomEvent.stop(event);
-                        if (NS_interface.moving_control_point == null) {
-                            NS_interface.moving_control_point = this;
-                        }
-                
-                        NS_interface.map.dragging.disable();
-                        let {lat: circleStartingLat, lng: circleStartingLng} = this._latlng;
-                        let {lat: mouseStartingLat, lng: mouseStartingLng} = event.latlng;
+            
+            var markers = best_pair.markers();
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].marker.on('click', function(e) {
+                    // Disable new station creation.
+                    NS_interface.map.off('click', handle_map_click);
+                    setTimeout(function() {
+                        NS_interface.map.on('click', handle_map_click);
+                    }, 1000);
 
-                        NS_interface.map.on('mousemove', event => {
-                            console.log("control point mousemove");
-                            let {lat: mouseNewLat, lng: mouseNewLng} = event.latlng;
-                            let latDifference = mouseStartingLat - mouseNewLat;
-                            let lngDifference = mouseStartingLng - mouseNewLng;
+                });
+                markers[i].marker.on('mousedown', function (event) {
+                    NS_interface.preview_paths_enabled = false;
+                    console.log("clicked control point");
+                    NS_interface.moving_control_point = markers[i];
+            
+                    NS_interface.map.dragging.disable();
+                    let {lat: circleStartingLat, lng: circleStartingLng} = this._latlng;
+                    let {lat: mouseStartingLat, lng: mouseStartingLng} = event.latlng;
 
-                            let center = [circleStartingLat-latDifference, circleStartingLng-lngDifference];
-                            marker.setLatLng(center);
-                        });
+                    NS_interface.map.on('mousemove', function(event) {
+                        console.log("control point mousemove");
+                        let {lat: mouseNewLat, lng: mouseNewLng} = event.latlng;
+                        let latDifference = mouseStartingLat - mouseNewLat;
+                        let lngDifference = mouseStartingLng - mouseNewLng;
+
+                        let center = [circleStartingLat-latDifference, circleStartingLng-lngDifference];
+                        NS_interface.moving_control_point.marker.setLatLng(center);
+                        NS_interface.move_control_point(best_pair, 0, center);
                     });
-                    this.preview_path_layer.addLayer(marker);
-                }
+                });
+                this.preview_path_layer.addLayer(markers[i].marker);
             }
         }
         
+    }
+    
+    move_control_point(station_pair, i, location) {
+        station_pair.user_control_points[i] = new BezierControlPoint(location[0], location[1]);
     }
 
     preview_station(line, lat, lng) {

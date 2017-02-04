@@ -10,7 +10,7 @@ class StationMarker {
 
     generate_marker() {
         var latlng = L.latLng(this.station.location[0], this.station.location[1]);
-        var marker = L.circleMarker(latlng, {draggable: true, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT);
+        var marker = L.circleMarker(latlng, {draggable: true, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT).bindTooltip(this.station.name, {direction: 'top', offset: L.point(0, -5), className: 'station-marker-tooltip'});
 
         return marker;
     }
@@ -55,9 +55,21 @@ class BezierControlPoint {
         this.lat = lat;
         this.lng = lng;
     }
+}
+
+class BezierControlPointMarker {
     
-    marker() {
-        var marker = L.circleMarker(L.latLng(this.lat, this.lng), {draggable: true, color: "black", opacity: 0.8, fillColor: "#333", fillOpacity: 0.8, zIndexOffset: 100, radius: 5});
+    constructor(b) {
+        this.bcp = b;
+        this.marker = this.generate_marker();
+    }
+    
+    update_marker() {
+        this.marker = this.generate_marker();
+    }
+    
+    generate_marker() {
+        var marker = L.circleMarker(L.latLng(this.bcp.lat, this.bcp.lng), {draggable: false, color: "black", opacity: 0.8, fillColor: "#333", fillOpacity: 0.8, zIndexOffset: 100, radius: 5});
         return marker;
     }
 }
@@ -137,6 +149,8 @@ class StationPair {
     constructor(stations) {
         this.stations = stations;
         this.line_control_points = [];
+        this.user_modified = false;
+        this.user_control_points = [];
         this.paths = [];
     }
     
@@ -154,6 +168,11 @@ class StationPair {
                 this.line_control_points.splice(i, 1);
             }
         }
+    }
+    
+    set_user_control_points(control_points) {
+        this.user_control_points = control_points;
+        this.user_modified = true;
     }
     
     lines() {
@@ -258,6 +277,13 @@ class StationPair {
         x1 = x1 / this.line_control_points.length;
         y1 = y1 / this.line_control_points.length;
         return [{"lat": x0, "lng": y0}, {"lat": x1, "lng": y1}];
+    }
+    
+    markers() {
+        var cp = this.average_lcp();
+        var b1 = new BezierControlPointMarker(cp[0]);
+        var b2 = new BezierControlPointMarker(cp[1]);
+        return [b1, b2];
     }
     
     generate_path(lcp, color, offset, weight, opacity) {        

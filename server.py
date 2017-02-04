@@ -105,6 +105,7 @@ def route_session_load():
         sdata = row[0]
         m = Transit.Map(0)
         m.from_json(sdata)
+        m.sidf_state = 0
         m.regenerate_all_ids()
         session_to_map[session['id']] = m
 

@@ -60,7 +60,7 @@ function create_station_marker(id, latlng_orig) {
 
 function handle_map_click(e) {
 
-    if (NS_interface.active_line != null) {
+    if (NS_interface.active_line != null && NS_interface.active_tool == "station") {
         NS_interface.add_new_station(e.latlng.lat, e.latlng.lng);
     }
 
