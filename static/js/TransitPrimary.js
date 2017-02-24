@@ -4,6 +4,7 @@ var NS_map;
 var NS_service;
 var NS_interface;
 var NS_id = new IdFactory();
+var NS_id_sp = new IdFactory();
 
 function initialize_game_state() {
 
@@ -20,20 +21,6 @@ function initialize_game_state() {
     }).addTo(map);
 
     map.on('click', handle_map_click);
-
-
-    map.on('mousemove', function(e) {
-        if (NS_interface.active_tool == "station") {
-            if (NS_interface.active_line != null) {
-                NS_interface.preview_line(NS_interface.active_line, e.latlng.lat, e.latlng.lng);
-            }
-        }
-        if (NS_interface.active_tool == "line") {
-            if (NS_interface.active_line != null) {
-                NS_interface.preview_station(NS_interface.active_line, e.latlng.lat, e.latlng.lng);
-            }
-        }
-    });
 
     // Initialize interface
     NS_interface = new TransitUI(map);
@@ -147,15 +134,20 @@ initialize_game_state();
 
 $(function() {
 
-    if (PRELOADED_SESSION) {
+    /*if (PRELOADED_SESSION) {
         $("#starter").hide();
-    }
+    }*/
 
     // Event handlers
     $(document).on('click', '.station-delete', delete_station_event);
     $(document).on('click', '.station-transfer', transfer_station_event);
     $(document).on('click', '.station-build', build_to_station_event);
-    $(document).on('click', '.subway-deletable', remove_line_from_station_event);
+    $(document).on('click', '.subway-deletable', function() {
+        var id = $(this).attr('id');
+        console.log(id);
+        var id_comps = id.split('.');
+        NS_interface.remove_line_from_station(parseInt(id_comps[0]), parseInt(id_comps[1]));
+    });
     $(document).on('click', '.station-name', function() {
         var text = $(this).text();
         var sn = $(this);
@@ -214,20 +206,6 @@ $(function() {
         $("#starter").hide();
     });
 
-    $(".game-start-button").not(".game-start-greyed").click(function() {
-        handle_server_file("static/game-starters/" + $(this).attr("id") + ".json");
-        /*
-        $(".subway-shuttle-add").remove();
-        $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+1));
-        $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+2));
-        $(".subway-shuttle").removeClass("subway-shuttle-add");
-        $(".subway-shuttle").children(".content").text("S");
-        $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+3));
-
-        number_of_shuttles = 3;*/
-        $("#starter").hide();
-    });
-
     var input = document.getElementById('pac-input');
     var autocomplete = new google.maps.places.Autocomplete(input, {types: ["(cities)"]});
     autocomplete.addListener('place_changed', function() {
@@ -238,7 +216,6 @@ $(function() {
         var place_lat = place.geometry.location.lat();
         var place_lng = place.geometry.location.lng();
         NS_interface.map.panTo(L.latLng(place_lat, place_lng));
-        $("#starter").hide();
     });
 
     // Color pickers
@@ -274,6 +251,12 @@ $(function() {
         if (NS_interface.active_tool != "station") {
             $(".tool-button").removeClass("game-button-active");
             $("#tool-station").addClass("game-button-active");
+            NS_interface.preview_path_layer.clearLayers();
+            NS_interface.bezier_layer.clearLayers();
+            for (var i = 0; i < NS_interface.station_markers.length; i++) {
+                NS_interface.station_markers[i].marker.off('click');
+                NS_interface.station_markers[i].generate_popup();
+            }
             NS_interface.active_tool = "station";
         }
     });
@@ -281,6 +264,7 @@ $(function() {
         if (NS_interface.active_tool != "line") {
             $(".tool-button").removeClass("game-button-active");
             $("#tool-line").addClass("game-button-active");
+            NS_interface.preview_path_layer.clearLayers();
             NS_interface.active_tool = "line";
         }
     });

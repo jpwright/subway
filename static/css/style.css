@@ -382,6 +382,7 @@ textarea.station-name-edit {
 #route-diagram {
     background: rgba(255, 255, 255, 0.10);
     top: 0px;
+    overflow-x: hidden;
     overflow-y: scroll;
     height: 100%;
     width: 100%;
@@ -439,6 +440,7 @@ textarea.station-name-edit {
 .route-diagram-stop-connectors {
     display: table-cell;
     width: 100%;
+    min-width: 50px;
 }
 
 .route-diagram-branch {
@@ -496,103 +498,56 @@ textarea.station-name-edit {
 
 #starter {
     width: 66%;
-    height: 90%;
-    margin-left: 5%;
-    margin-top: 2%;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.65);
-    color: white;
-    position: absolute;
-}
-
-#game-header {
-    font-size: 3em;
-    font-weight: bold;
-    position: relative;
-    bottom: 0px;
-    width: 100%;
-    height: 100px;
-    text-align: center;
-    padding: 20px 0;
-    margin-bottom: 20px;
-}
-
-#game-video {
-    text-align: center;
-    top: 100px;
-    bottom: 200px;
-    position: absolute;
-    width: 100%;
-}
-
-#game-video video {
-
-    right: 0;
-    top: 0;
-    width: auto;
     height: 100%;
-    z-index: -100;
-    background-size: cover;
-    overflow: hidden;
-}
-
-#game-start {
-    width: 100%;
+    margin-left: 5%;
+    color: white;
+    display: table;
+    z-index: 900;
     position: absolute;
-    bottom: 0px;
-    height: 200px;
-    white-space: nowrap;
-    overflow: hidden;
 }
 
-.game-start-descriptor {
-    margin: 20px auto;
+#starter #pac-input {
+    color: #222;
+    font-size: 3em;
+    height: 2em;
+    padding-left: 0.4em;
+}
+
+#starter-middle {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+#starter-inner {
+    margin: 10px;
+    padding: 10px;
+    width: auto;
+    height: 200px;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid #777;
 }
 
 .game-start-choice-large {
     border: 1px solid white;
-    padding: 10px;
+    display: block;
     cursor: pointer;
-    margin: 20px auto;
-    width: 200px;
-    height: 50px;
-    line-height: 50px;
     text-align: center;
-}
-
-.game-start-section {
-    display: block;
-    width: 50%;
-    height: 250px;
-    float: left;
-    overflow-y: auto;
-}
-
-div.game-start-greyed {
-    color: #777;
-    border: 1px solid #777;
-    cursor: default;
-}
-
-.game-start-interior {
-    margin: 10px;
-    padding: 10px;
-    width: auto;
-    border: 1px solid #777;
-}
-
-.game-start-choice-small {
-    border: 1px solid white;
-    display: block;
-    cursor: pointer;
-    margin: 20px;
-    padding: 20px;
+    font-size: 2em;
+    height: 100px;
+    display: table-cell;
+    vertical-align: middle;
 }
 
 #game-start-city-picker {
-    width: 200px;
+    width: 75%
+    height: 2em;
     text-align: center;
-    margin: 0 auto;
+    float: left;
+}
+
+#game-start-scratch {
+    width: 30%;
+    float: right;
 }
 
 

@@ -2,6 +2,7 @@ class StationMarker {
 
     constructor(station) {
         this.station = station;
+        this.tooltip_options = {direction: 'top', offset: L.point(0, -5), className: 'station-marker-tooltip'};
         this.marker = this.generate_marker();
         this.popup = L.popup({'className': 'station-popup'});
         this.marker.bindPopup(this.popup);
@@ -10,7 +11,7 @@ class StationMarker {
 
     generate_marker() {
         var latlng = L.latLng(this.station.location[0], this.station.location[1]);
-        var marker = L.circleMarker(latlng, {draggable: true, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT).bindTooltip(this.station.name, {direction: 'top', offset: L.point(0, -5), className: 'station-marker-tooltip'});
+        var marker = L.circleMarker(latlng, {draggable: true, color: "black", opacity: 1.0, fillColor: "white", fillOpacity: 1.0, zIndexOffset: 100}).setRadius(MARKER_RADIUS_DEFAULT).bindTooltip(this.station.name, this.tooltip_options);
 
         return marker;
     }
@@ -24,7 +25,7 @@ class StationMarker {
         var active_line_is_different = true;
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
-            content += '<div id="'+this.station.id+'" class="subway-line-long subway-deletable station-popup-line-marker" style="background-color: '+line.color_bg+'; color: '+line.color_fg+';"><div class="content">'+line.name+'</div></div>';
+            content += '<div id="'+this.station.id.toString()+'.'+line.id.toString()+'" class="subway-line-long subway-deletable station-popup-line-marker" style="background-color: '+line.color_bg+'; color: '+line.color_fg+';"><div class="content">'+line.name+'</div></div>';
             if (line.id == NS_interface.active_line.id) {
                 active_line_is_different = false;
             }
@@ -45,6 +46,12 @@ class StationMarker {
 
         this.popup.setContent(content);
         this.popup.update();
+        this.marker.bindPopup(this.popup);
+    }
+    
+    update_tooltip() {
+        this.marker.unbindTooltip();
+        this.marker.bindTooltip(this.station.name, this.tooltip_options);
     }
 
 }
@@ -59,8 +66,10 @@ class BezierControlPoint {
 
 class BezierControlPointMarker {
     
-    constructor(b) {
+    constructor(b, id, sp_id) {
         this.bcp = b;
+        this.id = id;
+        this.sp_id = sp_id;
         this.marker = this.generate_marker();
     }
     
@@ -69,7 +78,10 @@ class BezierControlPointMarker {
     }
     
     generate_marker() {
-        var marker = L.circleMarker(L.latLng(this.bcp.lat, this.bcp.lng), {draggable: false, color: "black", opacity: 0.8, fillColor: "#333", fillOpacity: 0.8, zIndexOffset: 100, radius: 5});
+        var options = {draggable: false, color: "black", opacity: 0.8, fillColor: "#333", fillOpacity: 0.8, zIndexOffset: 100, radius: 5};
+        var marker = L.circleMarker(L.latLng(this.bcp.lat, this.bcp.lng), options);
+        marker.mcp_index = this.id;
+        marker.sp_id = this.sp_id;
         return marker;
     }
 }
@@ -147,15 +159,21 @@ class StationPair {
     
     // Two stations associated with an array of LineControlPoints
     constructor(stations) {
+        this.id = NS_id_sp.id();
         this.stations = stations;
         this.line_control_points = [];
+        this.user_modifying = 0; // Index of actively modified user_control_point
         this.user_modified = false;
         this.user_control_points = [];
         this.paths = [];
+        this.draw_inverted = false;
     }
     
     add_control_points(line, control_points) {
         this.line_control_points.push(new LineControlPoints(line, control_points));
+        if (!this.user_modified) {
+            this.clear_user_control_points();
+        }
         this.line_control_points.sort(function(a,b) {
             return a.line.id > b.line.id;
         });
@@ -168,11 +186,19 @@ class StationPair {
                 this.line_control_points.splice(i, 1);
             }
         }
+        if (!this.user_modified) {
+            this.clear_user_control_points();
+        }
     }
     
     set_user_control_points(control_points) {
         this.user_control_points = control_points;
         this.user_modified = true;
+    }
+    
+    clear_user_control_points() {
+        var a_lcp = this.average_lcp();
+        this.user_control_points = [new BezierControlPoint(a_lcp[0].lat, a_lcp[0].lng), new BezierControlPoint(a_lcp[1].lat, a_lcp[1].lng)];
     }
     
     lines() {
@@ -280,14 +306,22 @@ class StationPair {
     }
     
     markers() {
-        var cp = this.average_lcp();
-        var b1 = new BezierControlPointMarker(cp[0]);
-        var b2 = new BezierControlPointMarker(cp[1]);
+        if (this.user_modified) {
+            var cp = [{"lat": this.user_control_points[0].lat, "lng": this.user_control_points[0].lng}, {"lat": this.user_control_points[1].lat, "lng": this.user_control_points[1].lng}];
+        } else {
+            var cp = this.average_lcp();
+        }
+        var b1 = new BezierControlPointMarker(new BezierControlPoint(cp[0].lat, cp[0].lng), 0, this.id);
+        var b2 = new BezierControlPointMarker(new BezierControlPoint(cp[1].lat, cp[1].lng), 1, this.id);
         return [b1, b2];
     }
     
-    generate_path(lcp, color, offset, weight, opacity) {        
-        var cp = this.average_lcp();
+    generate_path(lcp, color, offset, weight, opacity) {  
+        if (this.user_modified) {
+            var cp = [{"lat": this.user_control_points[0].lat, "lng": this.user_control_points[0].lng}, {"lat": this.user_control_points[1].lat, "lng": this.user_control_points[1].lng}];
+        } else {
+            var cp = this.average_lcp();
+        }
         
         if (lcp.control_points.length == 0) {
             var path = L.polyline([L.latLng(this.stations[0].location[0], this.stations[0].location[1]), L.latLng(this.stations[1].location[0], this.stations[1].location[1])], {weight: weight, color: color, opacity: opacity});
@@ -321,7 +355,14 @@ class StationPair {
         for (var i = 0; i < this.line_control_points.length; i++) {
             var lcp = this.line_control_points[i];
             //this.paths.push(this.generate_path(lcp, this.lcp_pos(lcp)*2 - (this.num_lines()-1)));
-            this.paths.push(this.generate_path(lcp, lcp.line.color_bg, this.lcp_pos_color(lcp)*2 - (this.num_lines_color()-1), 6, 1.0));
+            var offset = this.lcp_pos_color(lcp)*2 - (this.num_lines_color()-1);
+            /*if (this.stations[0].id > this.stations[1].id) {
+                offset = offset * -1;
+            }*/
+            /*if (this.draw_inverted) {
+                offset = offset * -1;
+            }*/
+            this.paths.push(this.generate_path(lcp, lcp.line.color_bg, offset, 6, 1.0));
         }
     }
     

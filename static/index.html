@@ -37,8 +37,6 @@
     <script src='static/js/spline.js'></script>
     <script src='static/js/bezier.js'></script>
 
-    <script src='static/js/FileSaver.min.js'></script>
-
     <script src='static/js/subway-settings.js'></script>
     <script src='static/js/subway-utils.js'></script>
     <script src='static/js/subway-files.js'></script>
@@ -56,40 +54,21 @@
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_upU9Ivq9tc2tk450HpgPr6zC3NHSjjs&libraries=places"></script>
 
-    <input type="file" id="fileElem" style="display:none" onchange="handle_files(this.files)">
-
-
-    <div id="map">
-    </div>
+    <div id="map"></div>
     <div id="starter">
-
-        <div id="game-header">Brand New Subway</div>
-
-        <div id="game-start">
-
-            <div class="game-start-section">
-                <div class="game-start-interior">
-                    <div id="game-start-city-picker"><input id="pac-input" class="controls" type="text" placeholder="Or type in a different city..."></div>
-                    <div class="game-start-choice-large" id="game-start-scratch">Start</div>
-                </div>
+        <div id="starter-middle">
+            <div id="starter-inner">
+                <div id="game-start-city-picker"><input id="pac-input" class="controls" type="text" value="New York City" /></div>
+                <div class="game-start-choice-large" id="game-start-scratch">Start</div>
             </div>
-            <div class="game-start-section">
-                <div class="game-start-interior">
-                    <div class="game-start-descriptor">Start from:</div>
-                    <div class="game-start-button game-start-choice-small" id="game-start-2016">2016 Present-Day Map</div>
-                    <div class="game-start-button game-start-choice-small" id="game-start-2025">2025 Planned Subway Map</div>
-                    <div class="game-start-button game-start-choice-small" id="game-start-1972">1972 Vignelli Map</div>
-                    <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963">1963 Nester's Map</div>
-                </div>
-            </div>
-
         </div>
 
     </div>
     <div id="options">
     <div id="option-section-tools">
-        <div id="tool-station" class="tool-button game-button-large">Station Editor</div>
-        <div id="tool-line" class="tool-button game-button-large">Line Editor</div>
+        <div id="tool-station" class="tool-button game-button-large">Map Editor</div>
+        <div id="tool-line" class="tool-button game-button-large">Visual Editor</div>
+        <div id="tool-line" class="tool-button game-button-large">Data Layers</div>
     </div>
     <div id="option-section-lines">
         <div id="line-selector" class="dropdown game-button">
