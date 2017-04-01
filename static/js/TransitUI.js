@@ -27,6 +27,9 @@ class TransitUI {
         this.preview_path_layer = L.featureGroup();
         this.bezier_layer = L.featureGroup();
         this.data_layer = L.featureGroup();
+        
+        this.hexagons = {}; // Indexed by hexagon gid
+        this.chroma_scale = chroma.scale('YlGnBu');
 
         this.map.addLayer(this.data_layer);
         this.map.addLayer(this.line_path_layer);
@@ -51,7 +54,9 @@ class TransitUI {
                 this.update_line_diagram();
             }
             if (this.moving_control_point != null) {
-                
+                console.log("updating moving control point");
+                this.sync_station_pair_info(this.get_station_pair_by_sp_id(this.moving_control_point_sp_id));
+                this.sync_station_pair_info(this.get_station_pair_by_sp_id(this.moving_opp_control_point_sp_id));
             }
         });
 
@@ -60,7 +65,12 @@ class TransitUI {
         });
 
         this.map.on('moveend', function(e) {
-            NS_interface.get_ridership();
+            if (NS_interface.active_tool == "station") {
+                //NS_interface.get_ridership();
+            }
+            if (NS_interface.active_tool == "data") {
+                //NS_interface.get_hexagons();
+            }
         });
     }
 
@@ -206,7 +216,7 @@ class TransitUI {
 
             this.update_line_selector(line.id);
             $("#"+line.id).html("<div class=\"subway-line-long\" style=\"background-color: "+line.color_bg+"; color: "+line.color_fg+";\"><div class=\"content\">"+line.name+"</div></div> "+line.full_name);
-            this.draw_line(line, true);
+            this.draw_line(line, true, true);
             $.ajax({ url: "line-update?service-id="+NS_map.primary_service().sid.toString()+"&line-id="+encodeURIComponent(line.sid)+"&name="+encodeURIComponent(line.name)+"&full-name="+encodeURIComponent(line.full_name)+"&color-bg="+encodeURIComponent(line.color_bg)+"&color-fg="+encodeURIComponent(line.color_fg),
                 async: false,
                 dataType: 'json',
@@ -272,7 +282,6 @@ class TransitUI {
             }
 
         }
-
         var delta = new LineDelta(best_edges, edges_to_remove);
 
         return delta;
@@ -336,7 +345,7 @@ class TransitUI {
                     //var lines = NS_interface.active_service.station_lines(station_marker.station);
                     var lines = NS_interface.lines_for_station_by_station_pair(station_marker.station);
                     for (var i = 0; i < lines.length; i++) {
-                        NS_interface.draw_line(lines[i], false);
+                        NS_interface.draw_line(lines[i], false, true);
                     }
                     NS_interface.station_marker_layer.bringToFront();
                 }
@@ -404,6 +413,8 @@ class TransitUI {
             var edges_to_remove = delta.remove;
 
             for (var i = 0; i < best_edges.length; i++) {
+                // Give it a real ID
+                best_edges[i].id = NS_id.id();
                 line.add_edge(best_edges[i]);
                 $.ajax({ url: "edge-add?service-id="+NS_interface.active_service.sid.toString()+"&line-id="+line.sid.toString()+"&stop-1-id="+best_edges[i].stops[0].sid+"&stop-2-id="+best_edges[i].stops[1].sid,
                     async: false,
@@ -436,10 +447,10 @@ class TransitUI {
         this.create_station_marker(station);
 
         for (var i = 0; i < lines_to_draw.length; i++) {
-            this.draw_line(lines_to_draw[i], false);
+            this.draw_line(lines_to_draw[i], false, true);
         }
         this.station_marker_layer.bringToFront();
-
+        this.get_ridership();
         this.update_line_diagram();
     }
 
@@ -478,6 +489,16 @@ class TransitUI {
             }
         });
     }
+    
+    sync_station_pair_info(station_pair) {
+        $.ajax({ url: "station-pair-info?service-id="+NS_interface.active_service.sid.toString()+"&station-id-1="+station_pair.stations[0].sid.toString()+"&station-id-2="+station_pair.stations[1].sid.toString()+"&ucp-0-lat="+station_pair.user_control_points[0].lat.toString()+"&ucp-0-lng="+station_pair.user_control_points[0].lng.toString()+"&ucp-1-lat="+station_pair.user_control_points[1].lat.toString()+"&ucp-1-lng="+station_pair.user_control_points[1].lng.toString(),
+            async: false,
+            dataType: 'json',
+            success: function(data, status) {
+                console.log(data);
+            }
+        });
+    }
 
     add_stop_to_station(id) {
 
@@ -509,6 +530,7 @@ class TransitUI {
             var edges_to_remove = delta.remove;
 
             for (var i = 0; i < best_edges.length; i++) {
+                best_edges[i].id = NS_id.id();
                 for (var j = 0; j < best_edges[i].stops.length; j++) {
                     var affected_station = best_edges[i].stops[j].station;
                     var station_lines = this.active_service.station_lines(affected_station);
@@ -554,10 +576,11 @@ class TransitUI {
         }
 
         for (var i = 0; i < lines_to_draw.length; i++) {
-            this.draw_line(lines_to_draw[i], false);
+            this.draw_line(lines_to_draw[i], false, true);
         }
         this.station_marker_layer.bringToFront();
         
+        this.get_ridership();
         this.update_line_diagram();
 
     }
@@ -666,6 +689,7 @@ class TransitUI {
                         var edges_to_remove = delta.remove;
 
                         for (var i = 0; i < best_edges.length; i++) {
+                            best_edges[i].id = NS_id.id();
                             line.add_edge(best_edges[i]);
                             $.ajax({ url: "edge-add?service-id="+NS_interface.active_service.sid.toString()+"&line-id="+line.sid.toString()+"&stop-1-id="+best_edges[i].stops[0].sid+"&stop-2-id="+best_edges[i].stops[1].sid,
                                 async: false,
@@ -717,21 +741,22 @@ class TransitUI {
         }
         
         // Remove all StationPairs that have this station.
-        /*
+        
         for (var i = this.station_pairs.length - 1; i >= 0; i--) {
             var station_pair = this.station_pairs[i];
-            if (station_pair.stations[0].id == id || station_pair.stations[1].id) {
+            if (station_pair.stations[0].id == id || station_pair.stations[1].id == id) {
+                this.station_pairs[i].undraw();
                 this.station_pairs.splice(i, 1);
             }
         }
-        */
 
         // Redraw all impacted lines.
         for (var i = 0; i < impacted_lines.length; i++) {
-            this.draw_line(impacted_lines[i], false);
+            this.draw_line(impacted_lines[i], false, true);
         }
         this.station_marker_layer.bringToFront();
 
+        this.get_ridership();
         this.update_line_diagram();
 
     }
@@ -742,6 +767,11 @@ class TransitUI {
         var station = this.active_service.get_station_by_id(station_id);
         var stop = line.get_stop_by_station(station);
         var impacted_lines = this.active_service.station_lines(station);
+        
+        if (impacted_lines.length == 1) {
+            this.remove_station(station_id);
+            return 0;
+        }
             
         line.remove_stop(stop);
 
@@ -813,6 +843,7 @@ class TransitUI {
                     var edges_to_remove = delta.remove;
 
                     for (var i = 0; i < best_edges.length; i++) {
+                        best_edges[i].id = NS_id.id();
                         line.add_edge(best_edges[i]);
                         $.ajax({ url: "edge-add?service-id="+NS_interface.active_service.sid.toString()+"&line-id="+line.sid.toString()+"&stop-1-id="+best_edges[i].stops[0].sid+"&stop-2-id="+best_edges[i].stops[1].sid,
                             async: false,
@@ -834,23 +865,17 @@ class TransitUI {
                 }
             }
         }
-        
-        // Remove all StationPairs that have this stop.
-        /*
-        for (var i = this.station_pairs.length - 1; i >= 0; i--) {
-            var station_pair = this.station_pairs[i];
-            if (station_pair.stations[0].id == id || station_pair.stations[1].id) {
-                this.station_pairs.splice(i, 1);
-            }
-        }
-        */
 
         // Redraw all impacted lines.
         for (var i = 0; i < impacted_lines.length; i++) {
-            this.draw_line(impacted_lines[i], false);
+            this.draw_line(impacted_lines[i], false, true);
         }
+        // Refresh the marker
+        this.get_station_marker_by_station(station).generate_popup();
+        
         this.station_marker_layer.bringToFront();
 
+        this.get_ridership();
         this.update_line_diagram();
 
     }
@@ -1159,8 +1184,9 @@ class TransitUI {
      * Draw a line.
      * line : line to draw
      * btf : true if station_markers should be brought to the front after the finish
+     * render : if the station_pairs should actually be rendered (or just updated)
      **/
-    draw_line(line, btf) {
+    draw_line(line, btf, render) {
         //console.log("draw line "+line.name);
         
         if (line.id in this.line_paths) {
@@ -1228,16 +1254,17 @@ class TransitUI {
                     station_pairs_to_draw.push(station_pair);
                     
                     // Draw now, for debug only
-                    station_pair.draw();
+                    //station_pair.draw();
                 }
             }
             
             this.update_station_markers(line);
         }
-
-        // Draw new station pairs.
-        for (var i = 0; i < station_pairs_to_draw.length; i++) {
-            station_pairs_to_draw[i].draw();
+        if (render) {
+            // Draw new station pairs.
+            for (var i = 0; i < station_pairs_to_draw.length; i++) {
+                station_pairs_to_draw[i].draw();
+            }
         }
 
         // Bring station marker layer to front.
@@ -1504,8 +1531,10 @@ class TransitUI {
             var station_marker = this.get_station_marker_by_station(best_station);
             station_marker.marker.unbindPopup();
             station_marker.marker.on('click', function(event) {
-                NS_interface.station_for_bezier_edits = best_station;
-                NS_interface.preview_station(lat, lng);
+                if (NS_interface.active_tool == "line") {
+                    NS_interface.station_for_bezier_edits = best_station;
+                    NS_interface.preview_station(lat, lng);
+                }
             });
             
             // Create station highlighter
@@ -1574,7 +1603,7 @@ class TransitUI {
                                     NS_interface.draw_bezier_rep_for_station(best_station);
                                     var lines = p.lines();
                                     for (var k = 0; k < lines.length; k++) {
-                                        NS_interface.draw_line(lines[k], false);
+                                        NS_interface.draw_line(lines[k], false, true);
                                     }
                                     NS_interface.station_marker_layer.bringToFront();
                                 });
@@ -1705,7 +1734,7 @@ class TransitUI {
     }
 
     get_ridership() {
-        /*$.ajax({ url: "transit-model",
+        $.ajax({ url: "transit-model",
             async: true,
             dataType: 'json',
             success: function(data, status) {
@@ -1715,21 +1744,48 @@ class TransitUI {
                     var station = NS_interface.active_service.get_station_by_sid(parseInt(i));
                     station.ridership = ridership;
                 }
-                NS_interface.data_layer.clearLayers();
-                for (var i = 0; i < data["region"]["hexagons"].length; i++) {
-                    var hexagon = data["region"]["hexagons"][i];
-                    var opacity = hexagon["population"]/3000.0;
-                    if (opacity > 0.7) opacity = 0.7;
-                    var poly = L.geoJSON(hexagon["geo"], { style: {
-                        color: "#ff7800",
-                        stroke: false,
-                        fillOpacity: opacity
-                    }});
-                    NS_interface.data_layer.addLayer(poly);
+            }
+        });
+    }
+    
+    get_hexagons() {
+        $.ajax({ url: "get-hexagons",
+            async: true,
+            dataType: 'json',
+            success: function(data, status) {
+                //NS_interface.data_layer.clearLayers();
+                var max_population = 0.0;
+                var min_population = -1.0;
+                var populations = [];
+                for (var i = 0; i < data["hexagons"].length; i++) {
+                    var population = data["hexagons"][i]["population"];
+                    if (population > max_population) max_population = population;
+                    if (population < min_population || min_population == -1.0) min_population = population;
+                    populations.push(population);
                 }
+                NS_interface.chroma_scale.domain([min_population, max_population], 7, 'quantiles');
+                for (var i = 0; i < data["hexagons"].length; i++) {
+                    var hexagon = data["hexagons"][i];
+                    var population = hexagon["population"];
+                    var opacity = 0.7;
+                    var color = NS_interface.chroma_scale(population).hex();
+                    if (hexagon["gid"] in NS_interface.hexagons) {
+                        var h = NS_interface.hexagons[hexagon["gid"]];
+                        if (h.color != color) {
+                            h.color = color;
+                            h.update_style();
+                        }
+                    } else {
+                        var h = new Hexagon(hexagon["gid"], hexagon["geo"], color, opacity);
+                        NS_interface.hexagons[hexagon["gid"]] = h;
+                        h.draw();
+                    }
+                }
+                NS_interface.line_path_layer.bringToFront();
+                NS_interface.station_marker_layer.bringToFront();
 
             }
-        });*/
+        });
     }
 
     load_session(session_id) {

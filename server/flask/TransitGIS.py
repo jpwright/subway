@@ -137,7 +137,7 @@ def hexagons_bb(bb):
 
 def station_constructor(sid, lat, lng):
     
-    MAPZEN_API_KEY = "search-aiLd92C"
+    MAPZEN_API_KEY = "mapzen-t6h4cff"
     mapzen_uri = "https://search.mapzen.com/v1/reverse?api_key="+MAPZEN_API_KEY+"&point.lat="+lat+"&point.lon="+lng+"&size=1&layers=address"
     
     geocode = requests.get(mapzen_uri)

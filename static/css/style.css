@@ -506,11 +506,15 @@ textarea.station-name-edit {
     position: absolute;
 }
 
-#starter #pac-input {
+#city-picker-input {
     color: #222;
     font-size: 3em;
     height: 2em;
     padding-left: 0.4em;
+}
+
+ul.ui-autocomplete {
+    z-index: 950;
 }
 
 #starter-middle {
@@ -539,14 +543,15 @@ textarea.station-name-edit {
 }
 
 #game-start-city-picker {
-    width: 75%
     height: 2em;
     text-align: center;
+    display: table-cell;
     float: left;
 }
 
 #game-start-scratch {
-    width: 30%;
+    width: 200px;
+    display: table-cell;
     float: right;
 }
 

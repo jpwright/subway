@@ -1,3 +1,4 @@
+import TransitSettings
 import json
 
 from geopy.distance import great_circle
@@ -13,6 +14,7 @@ class Map(object):
         self.sid = sid
         self.services = []
         self.sidf_state = 0
+        self.settings = TransitSettings.Settings()
 
     def add_service(self, s):
         self.services.append(s)
@@ -57,6 +59,9 @@ class Map(object):
             s = Service(service['sid'], service['name'])
             s.from_json(service)
             self.add_service(s)
+        self.settings = TransitSettings.Settings()
+        self.settings.from_json(j['settings'])
+        
 
 class Station(object):
     """A Station is a physical location consisting of one or more Stops.

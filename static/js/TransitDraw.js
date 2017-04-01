@@ -420,3 +420,41 @@ class LineColor {
         return "#"+rs+rg+rb;
     }
 }
+
+class Hexagon {
+    
+    constructor(id, geo, color, opacity) {
+        this.id = id;
+        this.geo = geo;
+        this.color = color;
+        this.opacity = opacity;
+        this.style = this.generate_style();
+        this.poly = this.generate_poly();
+    }
+    
+    generate_poly() {
+        return L.geoJSON(this.geo, {style: this.style});
+    }
+    
+    update_poly() {
+        this.poly = this.generate_poly();
+    }
+    
+    generate_style() {
+        return {
+            color: this.color,
+            stroke: false,
+            fillOpacity: this.opacity
+        };
+    }
+    
+    update_style() {
+        this.style = this.generate_style();
+        this.poly.setStyle(this.style);
+        this.poly.redraw();
+    }
+    
+    draw() {
+        NS_interface.data_layer.addLayer(this.poly);
+    }
+}

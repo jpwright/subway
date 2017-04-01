@@ -80,10 +80,10 @@ def map_analysis(m):
                 #print "Best cost is "+str(best_cost)
                 if (will_use_transit):
                     for station in stations:
-                        if station.id not in ridership:
-                            ridership[station.id] = demand
+                        if station.sid not in ridership:
+                            ridership[station.sid] = demand
                         else:
-                            ridership[station.id] += demand
+                            ridership[station.sid] += demand
     
     return TransitModel(ridership, condensed_region)
 

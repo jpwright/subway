@@ -42,6 +42,7 @@ function initialize_game_state() {
                 NS_map = new Map();
                 NS_map.sid = jdata.sid;
                 NS_map.from_json(jdata);
+                
                 NS_interface.active_service = NS_map.primary_service();
                 NS_interface.active_line = NS_map.primary_service().lines[0];
                 NS_interface.update_line_selector(NS_interface.active_line.id);
@@ -58,7 +59,25 @@ function initialize_game_state() {
                 }
                 for (var i = 0; i < NS_map.primary_service().lines.length; i++) {
                     var line = NS_map.primary_service().lines[i];
-                    NS_interface.draw_line(line, false);
+                    NS_interface.draw_line(line, false, false);
+                }
+                
+                // use user settings where appropriate
+                var user_settings = jdata.settings;
+                for (var i = 0; i < user_settings.station_pairs.length; i++) {
+                    var sp = user_settings.station_pairs[i];
+                    var station_1 = NS_map.primary_service().get_station_by_sid(sp.station_sids[0]);
+                    var station_2 = NS_map.primary_service().get_station_by_sid(sp.station_sids[1]);
+                    var sp_real = NS_interface.get_station_pair(station_1, station_2);
+                    if (sp_real != null) {
+                        var ucp = sp.user_control_points;
+                        sp_real[0].set_user_control_points([new BezierControlPoint(ucp[0][0], ucp[0][1]), new BezierControlPoint(ucp[1][0], ucp[1][1])]);
+                    }
+                }
+                
+                for (var i = 0; i < NS_map.primary_service().lines.length; i++) {
+                    var line = NS_map.primary_service().lines[i];
+                    NS_interface.draw_line(line, false, true);
                 }
                 NS_interface.station_marker_layer.bringToFront();
                 NS_interface.map.closePopup();
@@ -206,7 +225,7 @@ $(function() {
         $("#starter").hide();
     });
 
-    var input = document.getElementById('pac-input');
+    /*var input = document.getElementById('pac-input');
     var autocomplete = new google.maps.places.Autocomplete(input, {types: ["(cities)"]});
     autocomplete.addListener('place_changed', function() {
         var place = autocomplete.getPlace();
@@ -216,7 +235,32 @@ $(function() {
         var place_lat = place.geometry.location.lat();
         var place_lng = place.geometry.location.lng();
         NS_interface.map.panTo(L.latLng(place_lat, place_lng));
+    });*/
+    $("#city-picker-input").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: "http://search.mapzen.com/v1/autocomplete?api_key=mapzen-t6h4cff&layers=locality&text="+request.term,
+                dataType: "json",
+                success: function( data ) {
+                    response($.map(data.features, function(item) {
+                        if (item.properties.country_a == "USA") {
+                            return {
+                                label : item.properties.locality + ", " + item.properties.region_a,
+                                value : item.geometry
+                            };
+                        }
+                    }));
+                }
+            });
+        },
+        select: function (event, ui) {
+            $("#city-picker-input").val(ui.item.label);
+            NS_interface.map.panTo(L.latLng(ui.item.value.coordinates[1], ui.item.value.coordinates[0]));
+            return false;
+        },
+        minLength: 3
     });
+    $("#city-picker-input").attr('autocomplete', 'on');
 
     // Color pickers
     $("#color-picker-bg").spectrum({
@@ -253,10 +297,8 @@ $(function() {
             $("#tool-station").addClass("game-button-active");
             NS_interface.preview_path_layer.clearLayers();
             NS_interface.bezier_layer.clearLayers();
-            for (var i = 0; i < NS_interface.station_markers.length; i++) {
-                NS_interface.station_markers[i].marker.off('click');
-                NS_interface.station_markers[i].generate_popup();
-            }
+            //NS_interface.hexagons = {};
+            //NS_interface.data_layer.clearLayers();
             NS_interface.active_tool = "station";
         }
     });
@@ -265,7 +307,21 @@ $(function() {
             $(".tool-button").removeClass("game-button-active");
             $("#tool-line").addClass("game-button-active");
             NS_interface.preview_path_layer.clearLayers();
+            NS_interface.station_for_bezier_edits = null;
+            NS_interface.moving_station_marker = null;
+            NS_interface.hexagons = {};
+            NS_interface.data_layer.clearLayers();
             NS_interface.active_tool = "line";
+        }
+    });
+    $("#tool-data").click(function(e) {
+        if (NS_interface.active_tool != "data") {
+            $(".tool-button").removeClass("game-button-active");
+            $("#tool-data").addClass("game-button-active");
+            NS_interface.preview_path_layer.clearLayers();
+            NS_interface.bezier_layer.clearLayers();
+            NS_interface.get_hexagons();
+            NS_interface.active_tool = "data";
         }
     });
 

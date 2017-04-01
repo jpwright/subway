@@ -15,12 +15,14 @@ sys.path.append(os.path.abspath('server/flask'))
 import Transit
 import TransitGIS
 import TransitModel
+import TransitSettings
 
 import ConfigParser
 
 app = Flask(__name__, static_url_path='/static')
 app.secret_key = 'F12Yr58j4zX T~Y%C!efJ]Gxd/,?KT'
 
+sessions = []
 session_to_map = {}
 
 @app.route('/')
@@ -34,12 +36,13 @@ def route_session_status():
 
     if 'id' not in session:
         create_new_session = True
-    elif session['id'] not in session_to_map:
+    elif session['id'] not in sessions:
         create_new_session = True
 
     if create_new_session:
         # Get a new session ID
         session['id'] = '{:16x}'.format(uuid.uuid4().int & (1<<63)-1)
+        sessions.append(session['id'])
         # Create a new Map object and keep it
         session_to_map[session['id']] = Transit.Map(0)
 
@@ -108,6 +111,7 @@ def route_session_load():
         m.sidf_state = 0
         m.regenerate_all_ids()
         session_to_map[session['id']] = m
+        sessions.append(session['id'])
 
     return json.dumps({"id": session['id'], "data": m.to_json().replace("'", "''")})
 
@@ -474,10 +478,10 @@ def route_get_hexagons():
     
     m = session_to_map[session['id']]
     bb = TransitGIS.BoundingBox(m)
-    bb.min_lat -= 0.02;
-    bb.max_lat += 0.02;
-    bb.min_lng -= 0.02;
-    bb.max_lng += 0.02;
+    bb.min_lat -= 0.2;
+    bb.max_lat += 0.2;
+    bb.min_lng -= 0.2;
+    bb.max_lng += 0.2;
     
     hexagons = TransitGIS.hexagons_bb(bb)
     return hexagons.to_json()
@@ -493,15 +497,46 @@ def route_transit_model():
     model = TransitModel.map_analysis(m)
     
     return model.to_json()
+
+@app.route('/station-pair-info')
+def route_station_pair_info():
+    e = check_for_session_errors()
+    if e:
+        return e
+
+    service_id = request.args.get('service-id')
+    station_id_1 = int(request.args.get('station-id-1'))
+    station_id_2 = int(request.args.get('station-id-2'))
+    ucp_0_lat = float(request.args.get('ucp-0-lat'))
+    ucp_0_lng = float(request.args.get('ucp-0-lng'))
+    ucp_1_lat = float(request.args.get('ucp-1-lat'))
+    ucp_1_lng = float(request.args.get('ucp-1-lng'))
+
+    # Check that both stations exist
+    stations_found = 0
     
+    m = session_to_map[session['id']]
+    for s in m.services:
+        if service_id == str(s.sid):
+            # Look for matching station.
+            for station in s.stations:
+                if (station_id_1 == station.sid) or (station_id_2 == station.sid):
+                    stations_found += 1
+    
+    if stations_found != 2:
+        return json.dumps({"error": "Invalid ID"})
+    
+    m.settings.set_user_control_points(station_id_1, station_id_2, ucp_0_lat, ucp_0_lng, ucp_1_lat, ucp_1_lng)
+    
+    return json.dumps({"result": "OK"})
 
 def check_for_session_errors():
     if 'id' not in session:
         return json.dumps({"error": "Create session first"})
-    elif session['id'] not in session_to_map:
+    elif session['id'] not in sessions:
         return json.dumps({"error": "Invalid session"})
 
     return 0
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5050, threaded=True)

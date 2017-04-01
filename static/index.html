@@ -6,11 +6,11 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="static/css/style.css" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
     <link rel="stylesheet" href="static/css/bootstrap.min.css" />
@@ -51,6 +51,7 @@
     <script src='static/js/TransitUtils.js'></script>
 
     <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/chroma.min.js"></script>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_upU9Ivq9tc2tk450HpgPr6zC3NHSjjs&libraries=places"></script>
 
@@ -58,7 +59,7 @@
     <div id="starter">
         <div id="starter-middle">
             <div id="starter-inner">
-                <div id="game-start-city-picker"><input id="pac-input" class="controls" type="text" value="New York City" /></div>
+                <div id="game-start-city-picker"><input id="city-picker-input" type="text" value="New York City" /></div>
                 <div class="game-start-choice-large" id="game-start-scratch">Start</div>
             </div>
         </div>
@@ -68,7 +69,7 @@
     <div id="option-section-tools">
         <div id="tool-station" class="tool-button game-button-large">Map Editor</div>
         <div id="tool-line" class="tool-button game-button-large">Visual Editor</div>
-        <div id="tool-line" class="tool-button game-button-large">Data Layers</div>
+        <div id="tool-data" class="tool-button game-button-large">Data Layers</div>
     </div>
     <div id="option-section-lines">
         <div id="line-selector" class="dropdown game-button">
