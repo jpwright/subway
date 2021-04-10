@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brand New Subway</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0-beta.8/esri-leaflet.js"></script>
+
+</head>
+<body>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.0.2/esri-leaflet-geocoder.css">
+    <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.0.2/esri-leaflet-geocoder.js"></script>
+
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+
+    <script src="js/leaflet.curve.js"></script>
+    <script src='js/leaflet-pip.js'></script>
+    <script src='js/turf.min.js'></script>
+    <script src='js/spline.js'></script>
+    <script src='js/bezier.js'></script>
+    
+    <script src='js/FileSaver.min.js'></script>
+
+    <script src='js/subway-settings.js'></script>
+    <script src='js/subway-utils.js'></script>
+    <script src='js/subway-files.js'></script>
+    <script src='js/subway-id-generator.js'></script>
+    <script src='js/subway-station.js'></script>
+    <script src='js/subway-line.js'></script>
+    <script src='js/subway-transfer.js'></script>
+    <script src='js/subway-geocoding.js'></script>
+    <script src='js/subway-map-events.js'></script>
+    <script src='js/subway-data.js'></script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_upU9Ivq9tc2tk450HpgPr6zC3NHSjjs&libraries=places"></script>
+    <script type="text/javascript">
+        
+    </script>
+    
+    <input type="file" id="fileElem" style="display:none" onchange="handle_files(this.files)">
+
+
+    <div id="map">
+    </div>
+    <div id="starter">
+
+        <div id="game-header">Brand New Subway</div>
+        <div id="game-video">
+            <!--<video autoplay="autoplay" loop="loop">
+                <source src="img/guide.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>-->
+            <iframe src="https://player.vimeo.com/video/178420828?autoplay=1&loop=1&title=0&byline=0&portrait=0" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+        </div>
+        <div id="game-start">
+
+            <div class="game-start-section">
+                <div class="game-start-interior">
+                    <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
+                    <div id="game-start-city-picker"><input id="pac-input" class="controls" type="text" placeholder="Or type in a different city..."></div>
+                </div>
+            </div>
+            <div class="game-start-section">
+                <div class="game-start-interior">
+                    <div class="game-start-descriptor">Start from:</div>
+                    <div class="game-start-button game-start-choice-small" id="game-start-2016">2016 Present-Day Map</div>
+                    <div class="game-start-button game-start-choice-small" id="game-start-2025">2025 Planned Subway Map</div>
+                    <div class="game-start-button game-start-choice-small" id="game-start-1972">1972 Vignelli Map</div>
+                    <div class="game-start-button game-start-choice-small game-start-greyed" id="game-start-1963">1963 Nester's Map</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <div id="options">
+    <div id="option-section-lines">
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-blue subway-selected"><div class="height_fix"></div><div class="content">A</div></div>
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">C</div></div>
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">E</div></div>
+            <div class="subway-line subway-clickable subway-blue subway-hidden"><div class="height_fix"></div><div class="content">H</div></div>
+            <div class="subway-line subway-clickable subway-blue subway-hidden"><div class="height_fix"></div><div class="content">K</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">B</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">D</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">F</div></div>
+            <div class="subway-line subway-clickable subway-orange"><div class="height_fix"></div><div class="content">M</div></div>
+            <div class="subway-line subway-clickable subway-orange subway-hidden"><div class="height_fix"></div><div class="content">V</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-light-green"><div class="height_fix"></div><div class="content">G</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">J</div></div>
+            <div class="subway-line subway-clickable subway-brown"><div class="height_fix"></div><div class="content">Z</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-silver"><div class="height_fix"></div><div class="content">L</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">N</div></div>
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">Q</div></div>
+            <div class="subway-line subway-clickable subway-yellow"><div class="height_fix"></div><div class="content">R</div></div>
+            <div class="subway-line subway-clickable subway-yellow subway-hidden"><div class="height_fix"></div><div class="content">W</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-gray subway-shuttle" id="S-1"><div class="height_fix"></div><div class="content">S</div></div>
+            <div class="subway-line subway-clickable subway-gray subway-shuttle subway-shuttle-add" id="S-2"><div class="height_fix"></div><div class="content">+</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">1</div></div>
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">2</div></div>
+            <div class="subway-line subway-clickable subway-red"><div class="height_fix"></div><div class="content">3</div></div>
+            <div class="subway-line subway-clickable subway-red subway-hidden"><div class="height_fix"></div><div class="content">9</div></div>
+            <div class="subway-line subway-clickable subway-red subway-hidden"><div class="height_fix"></div><div class="content">13</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">4</div></div>
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">5</div></div>
+            <div class="subway-line subway-clickable subway-green"><div class="height_fix"></div><div class="content">6</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">8</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">10</div></div>
+            <div class="subway-line subway-clickable subway-green subway-hidden"><div class="height_fix"></div><div class="content">12</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-purple"><div class="height_fix"></div><div class="content">7</div></div>
+            <div class="subway-line subway-clickable subway-purple subway-hidden"><div class="height_fix"></div><div class="content">11</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-blue"><div class="height_fix"></div><div class="content">SI</div></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-light-yellow tooltip" id="subway-airtrain-jfk"><div class="height_fix"></div><div class="content">&#9992;</div><span class="tooltiptext info">JFK AirTrain</span></div>
+            <div class="subway-line subway-clickable subway-light-yellow subway-hidden tooltip" id="subway-airtrain-lga"><div class="height_fix"></div><div class="content">&#9992;</div><span class="tooltiptext info">LGA AirTrain</span></div>
+        </div>
+        <div class="subway-line-group">
+            <div class="subway-line subway-clickable subway-imaginary subway-turquoise"><div class="height_fix"></div><div class="content">T</div></div>
+            <div class="subway-line-long subway-clickable subway-imaginary subway-black"><div class="height_fix"></div><div class="content">BQX</div></div>
+            <div class="subway-line-long subway-clickable subway-imaginary subway-yellow"><div class="height_fix"></div><div class="content">TriboroRX</div></div>
+        </div>
+
+        <div id="custom-lines" class="subway-line-group">
+        </div>
+
+        <div class="subway-line-group subway-hidden">
+            <div class="subway-line subway-clickable subway-imaginary subway-maroon subway-hidden"><div class="height_fix"></div><div class="content">MJ</div></div>
+        </div>
+
+        <div id="additional-options">
+            <div id="add-lines" class="game-button">Show Additional Lines</div>
+            <div id="custom-line" class="game-button">Add Custom Line</div>
+        </div>
+        <div id="custom-line-options">
+            <div id="custom-line-options-column-preview">
+                <div id="custom-line-container">
+                    <div id="custom-line-marker" class="subway-line" style="background-color: #808183; color: #ffffff;"><div class="height_fix"></div><div id="custom-line-marker-content" class="content">?</div></div>
+                </div>
+            </div>
+            <div id="custom-line-options-column-inputs">
+                <div class="custom-line-options-label">Line name<br />
+                <input type="text" id="custom-line-name" name="custom-line-name" placeholder="?" /></div>
+                <div class="custom-line-options-label">Background color<br />
+                <input type="text" id="custom-line-css-bg" name="custom-line-css-bg" placeholder="#808183" /></div>
+                <div class="custom-line-options-label">Text color<br />
+                <input type="text" id="custom-line-css-text" name="custom-line-css-text" placeholder="#FFFFFF" /></div>
+                <div id="custom-line-add" class="game-button">Add</div>
+                <div id="custom-line-error"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="option-section-route">
+        <div id="route-header"><span id="route-triangle"><i class="fa fa-caret-right" aria-hidden="true"></i></span> Route Diagram</div>
+        <div id="route-diagram-container"><div id="route-diagram"></div></div>
+    </div>
+
+    <div id="option-section-status">
+        <div id="game-outcome">
+            <div id="metrocard">
+                <span class="game-icon"><i class="fa fa-credit-card" aria-hidden="true"></i></span>
+                <span id="metrocard-cost"></span>
+                <div class="game-icon-description">Single-ride MetroCard fare</div>
+            </div>
+            <div id="ridership">
+                <span class="game-icon"><i class="fa fa-user" aria-hidden="true"></i></span>
+                <span id="system-ridership"></span>
+                <div class="game-icon-description">Average weekday ridership</div>
+            </div>
+            <div id="rating">
+                <span class="game-icon"><i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                <span id="system-rating"></span>
+                <div class="game-icon-description">Overall system rating</div>
+            </div>
+        </div>
+        <div id="game-load" class="game-button">Load</div>
+        <div id="game-save" class="game-button">Save</div>
+        <a id="game-about" class="game-button" href="http://jpwright.net/projects/subway">About this game</a>
+        <div class="attribution"><a href="http://leafletjs.com/">Leaflet</a> | Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ</div>
+    </div>
+
+    </div>
+
+
+    <script src='js/subway-main.js'></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-81626013-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+</body>
+</html>

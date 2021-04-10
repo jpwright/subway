@@ -398,7 +398,7 @@ textarea.station-name-edit {
     height: 90%;
     margin-left: 5%;
     margin-top: 2%;
-    z-index: 5000;
+    z-index: 1000;
     background: rgba(0, 0, 0, 0.65);
     color: white;
     position: absolute;
@@ -454,8 +454,8 @@ textarea.station-name-edit {
     cursor: pointer;
     margin: 20px auto;
     width: 200px;
-    height: 100px;
-    line-height: 100px;
+    height: 50px;
+    line-height: 50px;
     text-align: center;
 }
 
@@ -486,6 +486,12 @@ div.game-start-greyed {
     cursor: pointer;
     margin: 20px;
     padding: 20px;
+}
+
+#game-start-city-picker {
+    width: 200px;
+    text-align: center;
+    margin: 0 auto;
 }
 
 

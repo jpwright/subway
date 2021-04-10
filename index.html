@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.1/leaflet-src.js"></script>
 
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0-beta.8/esri-leaflet.js"></script>
 
@@ -44,7 +44,12 @@
     <script src='js/subway-geocoding.js'></script>
     <script src='js/subway-map-events.js'></script>
     <script src='js/subway-data.js'></script>
-
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_upU9Ivq9tc2tk450HpgPr6zC3NHSjjs&libraries=places"></script>
+    <script type="text/javascript">
+        
+    </script>
+    
     <input type="file" id="fileElem" style="display:none" onchange="handle_files(this.files)">
 
 
@@ -65,6 +70,7 @@
             <div class="game-start-section">
                 <div class="game-start-interior">
                     <div class="game-start-choice-large" id="game-start-scratch">Start from scratch</div>
+                    <div id="game-start-city-picker"><input id="pac-input" class="controls" type="text" placeholder="Or type in a different city..."></div>
                 </div>
             </div>
             <div class="game-start-section">
