@@ -223,7 +223,7 @@ map.addLayer(debug_layer);
 initialize_game_state();
 
 var HEADLESS_MODE = false;
-
+var CUSTOM_CITY_NAME = "";
 
 $(function() {
 
@@ -359,6 +359,19 @@ $(function() {
         $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+3));
 
         number_of_shuttles = 3;*/
+        $("#starter").hide();
+    });
+    
+    var input = document.getElementById('pac-input');
+    var autocomplete = new google.maps.places.Autocomplete(input, {types: ["(cities)"]});
+    autocomplete.addListener('place_changed', function() {
+        var place = autocomplete.getPlace();
+        
+        CUSTOM_CITY_NAME = place.name;
+        
+        var place_lat = place.geometry.location.lat();
+        var place_lng = place.geometry.location.lng();
+        map.panTo(L.latLng(place_lat, place_lng));
         $("#starter").hide();
     });
 
