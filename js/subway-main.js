@@ -206,12 +206,15 @@ var map = L.map('map', {
     attributionControl: false
 }).setView([40.713, -74.006], 13);
 
+
+L.tileLayer.provider('CartoDB.Positron').addTo(map);
+/*
 L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: '',
         maxZoom: 16,
         minZoom: 12
 }).addTo(map);
-
+*/
 var station_layer = L.featureGroup();
 var curve_layer = L.featureGroup();
 var debug_layer = L.featureGroup();
