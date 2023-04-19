@@ -305,29 +305,30 @@ $(function() {
             $('#custom-line-error').text('Enter a name.');
             issue = true;
         }
-        if (find_line_by_name(custom_line_name) != null) {
-            $('#custom-line-name').addClass('issue');
-            $('#custom-line-error').text('Name already in use.');
-            issue = true;
-        }
-        if (!is_css_color(custom_line_css_bg)) {
-            $('#custom-line-css-bg').addClass('issue');
-            $('#custom-line-error').text('Use a valid hex color code.');
-            issue = true;
-        }
-        if (!is_css_color(custom_line_css_text)) {
-            $('#custom-line-css-text').addClass('issue');
-            $('#custom-line-error').text('Use a valid hex color code.');
-            issue = true;
-        }
-        var custom_line_css_class = 'subway-line';
-        if ($("#custom-line-marker").hasClass('subway-line-long')) {
-            custom_line_css_class = 'subway-line-long';
-        }
-        if (!issue) {
+        if (find_line_by_name(custom_line_name) == null) {
+            if (!is_css_color(custom_line_css_bg)) {
+                $('#custom-line-css-bg').addClass('issue');
+                $('#custom-line-error').text('Use a valid hex color code.');
+                issue = true;
+            }
+            if (!is_css_color(custom_line_css_text)) {
+                $('#custom-line-css-text').addClass('issue');
+                $('#custom-line-error').text('Use a valid hex color code.');
+                issue = true;
+            }
+            var custom_line_css_class = 'subway-line';
+            if ($("#custom-line-marker").hasClass('subway-line-long')) {
+                custom_line_css_class = 'subway-line-long';
+            }
             add_custom_line(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
             add_custom_line_selector(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
 
+        } else {
+            console.log("Here")
+            var success = update_line_by_name(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text)
+            console.log(success);
+        }
+        if (!issue) {
             $('#custom-line-name').removeClass('issue');
             $('#custom-line-css-bg').removeClass('issue');
             $('#custom-line-css-text').removeClass('issue');

@@ -456,7 +456,6 @@ class LineGroup {
     }
 }
 
-
 function find_line_by_name(name) {
 
     // Loop through all lines, and return the 1st one that matches the name.

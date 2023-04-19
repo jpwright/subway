@@ -164,6 +164,45 @@ function is_css_color(s) {
     return String(s).match(/^#[0-9A-Fa-f]{6}$/);
 }
 
+function update_line_by_name(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text) {
+    // Loop through all lines, and return the 1st one that matches the name.
+    var oldColor = null;
+    var newLine = null;
+    for (var i = 0; i < N_lines.length; i++) {
+        if (N_lines[i].name == custom_line_name) {
+            oldColor = N_lines[i].color_bg;
+            N_lines[i].color_bg = custom_line_css_bg;
+            N_lines[i].color_text = custom_line_css_text;
+            newLine = N_lines[i];
+            break;
+        }
+    }
+    console.log(oldColor);
+    console.log(newLine);
+
+    if (oldColor.custom_line_css_bg != newLine.custom_line_css_bg) {
+
+        for (var i = 0; i < N_line_groups.length; i++) {
+            if (N_line_groups[i].name == oldColor) {
+                N_line_groups[i].remove_line(newLine.id);
+            }
+        }
+
+        var new_line_group_exists = false;
+        for (var i = 0; i < N_line_groups.length; i++) {
+            if (N_line_groups[i].name == custom_line_css_bg) {
+                N_line_groups[i].add_line(newLine.id);
+                new_line_group_exists = true;
+            }
+        }
+    
+        if (!new_line_group_exists) {
+            N_line_groups.push(new LineGroup(custom_line_css_bg, [newLine.id]));
+        }
+    }
+
+}
+
 function add_custom_line(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text) {
     var line = new Line(custom_line_name, custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
     N_lines.push(line);
