@@ -12,6 +12,7 @@ function handle_files(files) {
         return function(e) {
             // Render thumbnail.
             var data = JSON.parse(e.target.result);
+            console.log(data);
             load_game_json(data);
             $("#starter").hide();
         };
@@ -29,7 +30,9 @@ function handle_server_file(file) {
 }
 
 function load_game_json(data) {
+    console.log(data);
     initialize_game_state();
+    console.log(data);
     $("#custom-lines").empty();
     $("#custom-lines").hide();
 

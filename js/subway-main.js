@@ -1,4 +1,26 @@
+function getParameterByName(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
 
+function getJSON(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var status = xhr.status;
+      if (status === 200) {
+        callback(null, xhr.response);
+      } else {
+        callback(status, xhr.response);
+      }
+    };
+    xhr.send();
+};
 
 var neighborhoods = new L.geoJson();
 
@@ -37,6 +59,23 @@ var N_demand_station_links = {};
 
 $.getJSON( "json/demand.json", function( data ) {
     demand = data;
+
+    console.log("we are atcha");
+    let planUrl = getParameterByName("plan");
+    console.log(planUrl);
+    if (planUrl !== undefined && planUrl !== null) {
+        getJSON(planUrl,
+            function(err, data) {
+              if (err !== null) {
+                alert('Something went wrong: ' + err);
+              } else {
+                alert('Your query count: ' + data.lines.length);
+                console.log(data);
+                load_game_json(data);
+                $("#starter").hide();
+              }
+        });
+    }
 });
 
 var additional_lines_shown = false;
@@ -195,8 +234,7 @@ function initialize_game_state() {
     N_demand_station_links = {};
     N_demand_station_links[0] = {};
     N_demand_station_links[0][0] = [];
-
-
+    
 }
 
 // Main
@@ -380,3 +418,5 @@ $(function() {
     });
 
 });
+
+
