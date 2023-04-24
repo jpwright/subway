@@ -69,7 +69,6 @@ $.getJSON( "json/demand.json", function( data ) {
               if (err !== null) {
                 alert('Something went wrong: ' + err);
               } else {
-                alert('Your query count: ' + data.lines.length);
                 console.log(data);
                 load_game_json(data);
                 $("#starter").hide();
@@ -391,7 +390,11 @@ $(function() {
     });
 
     $(".game-start-button").not(".game-start-greyed").click(function() {
-        handle_server_file("game-starters/" + $(this).attr("id") + ".json");
+        let base = location.protocol + '//' + location.host;
+        location.href = base + location.pathname + '?plan=' + base +  "/game-starters/" + $(this).attr("id") + ".json";
+
+        //handle_server_file("game-starters/" + $(this).attr("id") + ".json");
+
         /*
         $(".subway-shuttle-add").remove();
         $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+1));
@@ -401,7 +404,7 @@ $(function() {
         $(".subway-shuttle").parent().append(newShuttleTemplate(number_of_shuttles+3));
 
         number_of_shuttles = 3;*/
-        $("#starter").hide();
+        // $("#starter").hide();
     });
     
     var input = document.getElementById('pac-input');
