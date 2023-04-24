@@ -390,8 +390,8 @@ $(function() {
     });
 
     $(".game-start-button").not(".game-start-greyed").click(function() {
-        let base = location.protocol + '//' + location.host;
-        location.href = base + location.pathname + '?plan=' + base +  "/game-starters/" + $(this).attr("id") + ".json";
+        let base = location.protocol + '//' + location.host+ location.pathname;
+        location.href = base + '?plan=' + base +  "/game-starters/" + $(this).attr("id") + ".json";
 
         //handle_server_file("game-starters/" + $(this).attr("id") + ".json");
 
