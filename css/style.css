@@ -289,7 +289,11 @@ textarea.station-name-edit {
 }
 
 .subway-turquoise {
+<<<<<<< HEAD
     background-color: #05AEDE;
+=======
+    background-color: #00ADD0;
+>>>>>>> 7945d4cdca0ae25fc35604f87ea9f32b77b0159a
 }
 
 .subway-maroon {
