@@ -357,8 +357,13 @@ $(function() {
             if ($("#custom-line-marker").hasClass('subway-line-long')) {
                 custom_line_css_class = 'subway-line-long';
             }
-            add_custom_line(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
-            add_custom_line_selector(custom_line_name, custom_line_css_class, custom_line_css_bg, custom_line_css_text);
+            if (!issue) {
+                add_custom_line(custom_line_name, custom_line_css_class,
+                        custom_line_css_bg, custom_line_css_text);
+                add_custom_line_selector(
+                        custom_line_name, custom_line_css_class,
+                        custom_line_css_bg, custom_line_css_text);
+            }
 
         } else {
             console.log("Here")
