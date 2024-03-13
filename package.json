@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "http-server": "^14.1.1",
+    "jsonfile": "^6.1.0",
+    "progress": "^2.0.3",
+    "turf": "^3.0.14"
+  }
+}
