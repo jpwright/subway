@@ -43,10 +43,11 @@ jsonfile.readFile(input_file, function(err, data) {
                 var boroCtId = population_data["2020"][q]["BCT2020"];
                 var geoid = population_data["2020"][q]["GEO_ID"];
                 if (!boroCtId) continue;
+                var ctId = boroCtId.slice(1);
                 var populationStr = population_data["2020"][q]["Pop1"];
                 var strippedPopulationStr = populationStr.replaceAll(",", ""); // remove commas so we can parseFloat
                 var population = parseFloat(strippedPopulationStr);
-                populations[geoid] = population;
+                populations[ctId] = population;
                 totalPopulation += population;
             }
             console.log("totalPopulation: "+totalPopulation);
@@ -101,6 +102,8 @@ jsonfile.readFile(input_file, function(err, data) {
             }
             
             console.log("Calculating voxels");
+            var tooFar = 0;
+            var numUndefined = 0;
             for (i = 0; i < voxels_dim; i++) {
                 var lat = lat_min + voxels_res_lat*i;
                 for (j = 0; j < voxels_dim; j++) {
@@ -110,7 +113,7 @@ jsonfile.readFile(input_file, function(err, data) {
                     
                     for (tract_index = 0; tract_index < data.features.length; tract_index++) {
                         var tract = data.features[tract_index];
-                        var geoid = tract.properties["GEOID"];
+                        var ct2020 = tract.properties["CT2020"];
                         var centroid = centroids[tract_index];
                         var square_centroid = turf.center({"type": "FeatureCollection", "features": [square]});
                         
@@ -123,15 +126,19 @@ jsonfile.readFile(input_file, function(err, data) {
                                 
                                 var overlap_area = turf.area(overlap_polygon);
                                 var tract_area = turf.area(tract);
-                                if (geoid in populations) {
+                                if (ct2020 in populations) {
                                     numHits += 1;
-                                    d += populations[geoid] * overlap_area/tract_area;
+                                    d += populations[ct2020] * overlap_area/tract_area;
                                 } else {
                                     numMisses += 1;
                                     d += 1000.0 * overlap_area/tract_area;
                                 }
+                            } else {
+                                numUndefined += 1;
                             }
                             
+                        } else {
+                            tooFar += 1;
                         }
                     }
 
@@ -155,8 +162,7 @@ jsonfile.readFile(input_file, function(err, data) {
                     }
                 }
             }
-            
-            
+               
 
             jsonfile.writeFile('demand.json', demand, {spaces: 2}, function(err) {
                 console.error(err);

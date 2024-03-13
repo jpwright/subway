@@ -12,11 +12,16 @@ To run: `npx http-server`
 ### File Generations
 Hopefully these steps are only necessary to do once per decade:
 
+#### everything.geojson
+You can download the latest `.geojson` for NYC from https://www.nyc.gov/site/planning/data-maps/open-data/census-download-metadata.page.
+Choose `2020 Census Tracts (Water Areas Included)`.
+Copy/paste the results into `json/everything.geojson`.
+
 #### population.json
 
 Download the latest census results from `nyc.gov`, e.g. for [2020](https://www.nyc.gov/site/planning/planning-level/nyc-population/). This gets downloaded as a `.xlsx` file. Using an online tool of your choice, convert the `2020` data into a `.json` file file and save them into every file in this repo called `population.json`.
 
-One possible converstion:
+One possible conversion:
 1. Import `.xlsx` file into google sheets.
 2. Delete all the tabs besides 2020 and redownload.
 3. Import the redownloaded file into `https://kinoar.github.io/xlsx-to-json/` and click `Download Localization JSON`.
