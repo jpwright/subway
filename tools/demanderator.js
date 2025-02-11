@@ -93,8 +93,6 @@ jsonfile.readFile(input_file, function(err, data) {
             
             console.log("Calculating centroids");
             var centroids = [];
-            var numMisses = 0;
-            var numHits = 0;
             for (tract_index = 0; tract_index < data.features.length; tract_index++) {
                 var turf_centroid = turf.centroid(data.features[tract_index]);
                 //var tract_area = turf.area(turf_polygons[tract_index]);
@@ -127,19 +125,11 @@ jsonfile.readFile(input_file, function(err, data) {
                                 var overlap_area = turf.area(overlap_polygon);
                                 var tract_area = turf.area(tract);
                                 if (ct2020 in populations) {
-                                    numHits += 1;
                                     d += populations[ct2020] * overlap_area/tract_area;
                                 } else {
-                                    numMisses += 1;
                                     d += 1000.0 * overlap_area/tract_area;
                                 }
-                            } else {
-                                numUndefined += 1;
                             }
-                            
-                        } else {
-                            tooFar += 1;
-                        }
                     }
 
                     
